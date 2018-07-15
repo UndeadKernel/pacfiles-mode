@@ -16,7 +16,22 @@
   (let ((buffer (get-buffer-create pacfiles--files-buffer-name)))
     (display-buffer buffer '(pacfiles//display-buffer-fullscreen))
     (with-current-buffer buffer
-      (pacfiles-mode))))
+      (pacfiles-mode)
+      (pacfiles-revert-buffer t t))))
+
+(defun pacfiles-revert-buffer (&optional ignore-auto noconfirm)
+  "Revert the buffer by finding .pacnew files. Ignore IGNORE-AUTO but take into account NOCONFIRM."
+  (interactive)
+  (with-current-buffer (get-buffer-create pacfiles--files-buffer-name)
+    (when (or noconfirm
+              (y-or-n-p (format "Reload list of backup pacman files? ")))
+      ;; The actual revert mechanism starts here
+      (run-hooks 'before-revert-hook)
+      (let ((inhibit-read-only t)
+            (files (split-string (shell-command-to-string pacfiles-search-command) "\n" t)))
+        (delete-region (point-min) (point-max))
+        (dolist (file files)
+          (insert file "\n"))))))
 
 (define-derived-mode pacfiles-mode special-mode "pacfiles"
   :syntax-table nil
@@ -33,9 +48,10 @@
   (when (and (fboundp 'display-line-numbers-mode)
              (bound-and-true-p global-display-line-numbers-mode))
     (display-line-numbers-mode -1))
+  (setq revert-buffer-function #'pacfiles-revert-buffer)
   ;; Set our key-bindings
   (define-key pacfiles-mode-map (kbd "q") #'pacfiles/quit))
 
 
 (provide 'pacfiles-mode)
-;;; pacfiles.el ends here
+;;; pacfiles-mode.el ends here
