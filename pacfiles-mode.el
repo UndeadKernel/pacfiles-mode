@@ -5,6 +5,9 @@
 
 (require 'pacfiles-win)
 
+(defvar pacfiles-search-command "find /etc -name '*.pacnew' 2>/dev/null"
+  "Command to find .pacnew files.")
+
 (defun pacfiles ()
   "Find and manage pacman backup files in an Arch-based GNU/Linux system."
   (interactive)
