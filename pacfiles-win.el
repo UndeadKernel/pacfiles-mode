@@ -5,21 +5,13 @@
 
 (require 'subr-x)
 
-(defvar pacfiles--files-buffer-name "*pacfiles-file-list*"
+(defvar pacfiles--files-buffer-name "*pacfiles:file-list*"
   "Name of the window that holds the list of pacman files.")
 
 (defvar pacfiles--previous-window-conf nil
   "The window configuration before `pacfiles' is called.")
 
-(defun pacfiles/quit ()
-  "Quit pacfiles-mode and restore the previous window configuration."
-  (interactive)
-  (let ((buffer (get-buffer pacfiles--files-buffer-name)))
-    (pacfiles//restore-window-conf)
-    (when buffer
-      (kill-buffer buffer))))
-
-(defun pacfiles//display-buffer-fullscreen (buffer alist)
+(defun pacfiles--display-buffer-fullscreen (buffer alist)
   "Display BUFFER fullscreen taking ALIST into account."
   (when-let (window (or (display-buffer-reuse-window buffer alist)
                         (display-buffer-same-window buffer alist)
@@ -28,12 +20,12 @@
     (delete-other-windows window)
     window))
 
-(defun pacfiles//save-window-conf ()
+(defun pacfiles--save-window-conf ()
   "Save the current window configuration to later be restored by `pacfiles//restore-window-conf'."
   (unless pacfiles--previous-window-conf
     (setq pacfiles--previous-window-conf (current-window-configuration))))
 
-(defun pacfiles//restore-window-conf ()
+(defun pacfiles--restore-window-conf ()
   "Bury or kill pacfiles' buffers according to KILL-BUFFER and restore the previous window configuration."
   (when pacfiles--previous-window-conf
     (condition-case nil
