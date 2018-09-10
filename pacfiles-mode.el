@@ -10,13 +10,18 @@
   "Command to find .pacnew files.")
 
 (defface pacfiles-header
-  '((t :foreground "blue"
-       :background "aquamarine"
-       :weight bold
-       :underline nil
-       ))
+  '((t (:foreground "blue"
+        :background "aquamarine"
+        :weight bold
+        :underline nil)))
   "Face used for headers."
   :group 'pacfiles-mode)
+
+(defface 2048-2-face
+  '((t (:foreground "red")))
+  "Face used for 2"
+  :group '2048-game)
+
 
 (defalias 'pacfiles 'pacfiles/start)
 
@@ -51,7 +56,7 @@
             (files (split-string (shell-command-to-string pacfiles-search-command) "\n" t)))
         (delete-region (point-min) (point-max))
         (dolist (file files)
-          (put-text-property 0 (length file) 'font 'pacfiles-header file)
+          (put-text-property 0 (length file) 'face 'pacfiles-header file)
           (insert file "\n"))))))
 
 (define-derived-mode pacfiles-mode special-mode "pacfiles"
@@ -70,7 +75,7 @@
   (when (and (fboundp 'display-line-numbers-mode)
              (bound-and-true-p global-display-line-numbers-mode))
     (display-line-numbers-mode -1))
-  (setq revert-buffer-function #'pacfiles/revert-buffer)
+  (setq-local revert-buffer-function #'pacfiles/revert-buffer)
   ;; Set our key-bindings
   (define-key pacfiles-mode-map (kbd "q") #'pacfiles/quit))
 
