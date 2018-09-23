@@ -8,6 +8,9 @@
 (defvar pacfiles--files-buffer-name "*pacfiles:file-list*"
   "Name of the window that holds the list of pacman files.")
 
+(defvar pacfiles--merge-file-tmp-location "/tmp/"
+  "Location of temporary merged filed.")
+
 (defvar pacfiles--previous-window-conf nil
   "The window configuration before `pacfiles' is called.")
 
