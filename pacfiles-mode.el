@@ -53,7 +53,7 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
       (let ((inhibit-read-only t)
             (files (split-string (shell-command-to-string pacfiles-search-command) "\n" t)))
         (delete-region (point-min) (point-max))
-        (insert "* PACFILES MODE")
+        (insert "* PACFILES MODE" "\n")
         ;; Deal With .pacnew and .pacsave files separately
         (let ((pacnew-files (list))
               (pacsave-files (list)))
@@ -74,7 +74,9 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
           (insert "\n" "*** pending merge" "\n")
           ;; Display the .pacsave files that need merging
           (pacfiles--insert-pending-files pacsave-files :pacsave)
-          (insert "\n" "*** merged" "\n")))))
+          (insert "\n" "*** merged" "\n"))
+        (insert "\n\n")
+        (pacfiles--insert-footer-buttons))))
   (goto-char 0))
 
 (defun pacfiles--insert-pending-files (file-list file-type)
@@ -125,6 +127,20 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
                   (if reverse-order "day[s] old" "day[s] ahead"))
           'font-lock-face 'font-lock-warning-face)))))
 
+(defun pacfiles--insert-footer-buttons ()
+  "Insert the `apply all' and `discard all' buttons."
+  (insert-text-button "[Apply All]"
+                      'help-echo "Write all merged files into the system."
+                      'follow-link t
+                      'face 'font-lock-keyword-face
+                      'action (lambda (_) (message "TODO: implement me")))
+  (insert "  ")
+  (insert-text-button "[Discard All]"
+                      'help-echo "Discard all merged files."
+                      'follow-link t
+                      'face 'font-lock-keyword-face)
+                      'action (lambda (_) (message "TODO: implement me")))
+
 (defvar pacfiles-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q")       #'pacfiles/quit)
@@ -156,7 +172,9 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
   (when (and (fboundp 'display-line-numbers-mode)
              (bound-and-true-p global-display-line-numbers-mode))
     (display-line-numbers-mode -1))
-  (setq revert-buffer-function #'pacfiles/revert-buffer))
+  (setq revert-buffer-function #'pacfiles/revert-buffer)
+  ;; configure outline-mode
+  (setq-local outline-blank-line t))
 
 
 (provide 'pacfiles-mode)
