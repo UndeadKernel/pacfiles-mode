@@ -1,0 +1,20 @@
+* pacfiles
+
+** PACNEW files
+*** pending
+[merge] /etc/pacman.d/mirrorlist.pacnew (17 days old)
+[merge] /etc/pacman.d/mirrorlist.pacnew (2 days old)
+
+*** merged
+[apply][discard] /etc/makepkg (2018/3/2) --- /etc/pacman.d/mirrorlist.pacnew (2018/3/15)
+
+
+** PACSAVE files
+*** pending
+/etc/test.pacsave
+/etc/sddm.conf.pacsave
+/etc/X11/xorg.conf.d/20-nvidia.conf.pacsave
+*** merged
+
+
+[apply all] [discard all]
