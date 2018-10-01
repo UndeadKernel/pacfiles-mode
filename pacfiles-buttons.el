@@ -14,9 +14,12 @@ To determine the file-pair against which FILE will be merged, the extension of F
                         'help-echo (format "Start merging '%s' and '%s'."
                                            (file-name-nondirectory update-file)
                                            (file-name-nondirectory base-file))
-                        'action `(lambda (_) (ediff-merge-files ,update-file ,base-file nil
-                                               ;; location of the merged file-pair
-                                               (concat ,pacfiles--merge-file-tmp-location ,(cdr file-pair))))
+                        'action `(lambda (_)
+                                   (ediff-merge-files ,update-file ,base-file nil
+                                                      ;; location of the merged file-pair
+                                                      ,(cdr file-pair))
+                                   (debug)
+                                   (revert-buffer t t))
                         'face 'font-lock-keyword-face
                         'follow-link t)))
 
@@ -38,7 +41,10 @@ To determine the file-pair against which FILE will be merged, the extension of F
     (insert-text-button "[discard]"
                         'help-echo (format "Delete the merge of `%s' from the file system."
                                            (file-name-sans-extension (file-name-nondirectory update-file)))
-                        'action `(lambda (_) (message "TODO: Delete `%s'" ,merge-file))
+                        'action `(lambda (_)
+                                   (let ((del-file (pacfiles--add-sudo-maybe ,merge-file :write)))
+                                     (delete-file del-file))
+                                   (revert-buffer t t))
                         'face 'font-lock-keyword-face
                         'follow-link t)))
 

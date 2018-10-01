@@ -8,6 +8,7 @@
 ;;; Code:
 
 (require 'pacfiles-buttons)
+(require 'pacfiles-utils)
 (require 'pacfiles-win)
 (require 'pacfiles-diff)
 
@@ -60,7 +61,7 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
         ;; Split .pacnew and .pacsave files
         (dolist (file files)
           ;; Associate each FILE in FILES with a file to hold the merge
-          (let ((merge-file (pacfiles--calculate-merge-file file)))
+          (let ((merge-file (pacfiles--calculate-merge-file file pacfiles--merge-file-tmp-location)))
             (cond
              ((string-match-p ".pacnew" file)
               (push (cons file merge-file) pacnew-alist))
@@ -90,7 +91,7 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
   "Insert files in FILES-ALIST if their `cdr' is not in MERGED-FILES.
 
 The FILE-TYPE specifies which type of update file we are processing.
-The FILE-TYPE argument can be either `:pacnew' or `:pacsave'."
+The FILE-TYPE argument can be either \":pacnew\" or \":pacsave\"."
   ;; Keep files in FILES-ALIST which don't have a cdr in MERGED-FILES.
   (let ((pending-alist (remove-if (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null pending-alist)
@@ -133,10 +134,6 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
                          (t (time-subtract time-file time-base-file))))
                   (if reverse-order "day[s] old" "day[s] ahead"))
           'font-lock-face 'font-lock-warning-face)))))
-
-(defun pacfiles--calculate-merge-file (file)
-  "File name associated to the merge file tied to FILE."
-  (concat pacfiles--merge-file-tmp-location (substring (secure-hash 'md5 file) 0 10) ".pacmerge"))
 
 (defun pacfiles--insert-days-created (file)
   "Insert the number of days since FILE was created."
