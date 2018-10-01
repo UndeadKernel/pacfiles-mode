@@ -7,6 +7,7 @@
 ;;   pacfiles-- : Private function or variable
 ;;; Code:
 
+(require 'pacfiles-buttons)
 (require 'pacfiles-win)
 (require 'pacfiles-diff)
 
@@ -14,7 +15,7 @@
   "Command to find .pacnew files.")
 
 (defvar pacfiles--merge-search-command
-  (concat "find " pacfiles--merge-file-tmp-location "-name '*.pacmerge 2>/dev/null'")
+  (concat "find " pacfiles--merge-file-tmp-location " -name '*.pacmerge' 2>/dev/null")
   "Command to search for temporarily merged files.")
 
 
@@ -52,76 +53,66 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
       (let ((inhibit-read-only t)
             (files (split-string (shell-command-to-string pacfiles-search-command) "\n" t))
             (merged-files (split-string (shell-command-to-string pacfiles--merge-search-command) "\n" t))
-            (pacnew-files (list))
-            (pacsave-files (list)))
+            (pacnew-alist (list))
+            (pacsave-alist (list)))
         (delete-region (point-min) (point-max))
         (insert "* PACFILES MODE" "\n")
-        ;; Deal With .pacnew and .pacsave files separately
-        ;; Split into .pacnew and .pacsave files
-        ;; Associate each file with a hash of the file to merge
+        ;; Split .pacnew and .pacsave files
         (dolist (file files)
-          (cond
-           ((string-match-p ".pacnew" file) (push file pacnew-files))
-           ((string-match-p ".pacsave" file) (push file pacsave-files))
-           (t (user-error (format "Cannot process file %s" file)))))
-        ;; Process .pacnew files
+          ;; Associate each FILE in FILES with a file to hold the merge
+          (let ((merge-file (pacfiles--calculate-merge-file file)))
+            (cond
+             ((string-match-p ".pacnew" file)
+              (push (cons file merge-file) pacnew-alist))
+             ((string-match-p ".pacsave" file)
+              (push (cons file merge-file) pacsave-alist))
+             (t (user-error (format "Cannot process file %s" file))))))
+        ;; --- Process .pacnew files ---
         (insert "\n\n" "** PACNEW files" "\n")
-        (insert "\n" "*** pending merge" "\n")
+        (insert "\n" "*** pending" "\n")
         ;; Display the .pacnew files that need merging
-        (pacfiles--insert-pending-files pacnew-files :pacnew)
+        (pacfiles--insert-pending-files pacnew-alist merged-files :pacnew)
         (insert "\n" "*** merged" "\n")
-        (pacfiles--insert-merged-files '() :pacnew)
-        ;; Process .pacsave files
+        ;; Display .pacnew files that have an associated merge file.
+        (pacfiles--insert-merged-files pacnew-alist merged-files :pacnew)
+        ;; --- Process .pacsave files ---
         (insert "\n\n" "** PACSAVE files" "\n")
-        (insert "\n" "*** pending merge" "\n")
+        (insert "\n" "*** pending" "\n")
         ;; Display the .pacsave files that need merging
-        (pacfiles--insert-pending-files pacsave-files :pacsave)
+        (pacfiles--insert-pending-files pacsave-alist merged-files :pacsave)
         (insert "\n" "*** merged" "\n")
-        (pacfiles--insert-merged-files '() :pacsave)
+        (pacfiles--insert-merged-files pacsave-alist merged-files :pacsave)
         (insert "\n\n")
         (pacfiles--insert-footer-buttons))))
   (goto-char 0))
 
-(defun pacfiles--insert-pending-files (pending-file-list file-type)
-  "Insert files in PENDING-FILE-LIST that can be merged of the type FILE-TYPE.
+(defun pacfiles--insert-pending-files (files-alist merged-files file-type)
+  "Insert files in FILES-ALIST if their `cdr' is not in MERGED-FILES.
 
+The FILE-TYPE specifies which type of update file we are processing.
 The FILE-TYPE argument can be either `:pacnew' or `:pacsave'."
-  (if (null pending-file-list)
-      (insert (propertize "--- no files found ---" 'font-lock-face 'font-lock-comment-face))
-    (dolist (file pending-file-list)
-      ;; calculate days old
-      (pacfiles--insert-merge-button file)
-      (insert " " file " ")
-      (pacfiles--insert-days-old file (if (eq file-type :pacnew) nil t))
-      (insert "\n"))))
+  ;; Keep files in FILES-ALIST which don't have a cdr in MERGED-FILES.
+  (let ((pending-alist (remove-if (lambda (i) (member (cdr i) merged-files)) files-alist)))
+    (if (null pending-alist)
+        (insert (propertize "--- no files to merge ---\n" 'font-lock-face 'font-lock-comment-face))
+      (dolist (file-pair pending-alist)
+        (pacfiles--insert-merge-button file-pair)
+        (insert " " (car file-pair) " ")
+        (pacfiles--insert-days-old (car file-pair) (if (eq file-type :pacnew) nil t))
+        (insert "\n")))))
 
-(defun pacfiles--insert-merged-files (merged-file-list file-type)
-  "Insert files in MERGED-FILE-LIST that can be applied of type FILE-TYPE."
-  (if (null merged-file-list)
-      (insert (propertize "--- no files found ---" 'font-lock-face 'font-lock-comment-face))
-    (dolist (file merged-file-list)
-      ;; calculate days old
-      (pacfiles--insert-apply-button file "file.lol")
-      (insert " " file " ")
-      (pacfiles--insert-days-created file)
-      (insert "\n"))))
-
-(defun pacfiles--insert-merge-button (file)
-  "Insert a button to merge FILE.
-
-To determine the file against which FILE will be merged, the extension of FILE is removed."
-  (let ((base-file (file-name-sans-extension file)))
-    (insert-text-button "[merge]"
-                        'help-echo (format "Start merging '%s' and `%s'."
-                                           (file-name-nondirectory file)
-                                           (file-name-nondirectory base-file))
-                        'action `(lambda (_) (ediff-merge-files ,file ,base-file nil
-                                               ;; location of the merged file
-                                               (concat ,pacfiles--merge-file-tmp-location
-                                                       ,(file-name-nondirectory base-file)
-                                                       ".pacfiles")))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+(defun pacfiles--insert-merged-files (files-alist merged-files file-type)
+  "Insert files in FILES-ALIST that have an associated file in MERGED-FILES of type FILE-TYPE."
+  (let ((merged-alist (remove-if-not (lambda (i) (member (cdr i) merged-files)) files-alist)))
+    (if (null merged-alist)
+        (insert (propertize "--- no files merged ---\n" 'font-lock-face 'font-lock-comment-face))
+      (dolist (file-pair merged-alist)
+        (pacfiles--insert-apply-button file-pair)
+        (pacfiles--insert-discard-button file-pair)
+        (insert " " (car file-pair) " ")
+        ;; calculate how many days old is the merged file
+        (pacfiles--insert-days-created (cdr file-pair))
+        (insert "\n")))))
 
 (defun pacfiles--insert-days-old (file &optional reverse-order)
   "Insert how many days passed between FILE and FILE without its extension.
@@ -143,16 +134,9 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
                   (if reverse-order "day[s] old" "day[s] ahead"))
           'font-lock-face 'font-lock-warning-face)))))
 
-(defun pacfiles--insert-apply-button (merge-file destination-file)
-  "Insert a button that copies MERGE-FILE to DESTINATION-FILE."
-  (let ((merge-name (file-name-sans-extension merge-file))
-        (destination-name (file-name-sans-extension destination-file)))
-    (insert-text-button "[merge]"
-                        'help-echo (format "Apply `%s' to the file system."
-                                           (file-name-nondirectory merge-file))
-                        'action `(lambda (_) (message "TODO: Copy `%s' to `%s'" ,merge-name ,destination-name nil))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+(defun pacfiles--calculate-merge-file (file)
+  "File name associated to the merge file tied to FILE."
+  (concat pacfiles--merge-file-tmp-location (substring (secure-hash 'md5 file) 0 10) ".pacmerge"))
 
 (defun pacfiles--insert-days-created (file)
   "Insert the number of days since FILE was created."
@@ -163,20 +147,6 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
           (format "(%.1f day[s] since created)" (time-to-number-of-days (time-since time-file)))
           'font-lock-face 'font-lock-string-face)))
     (error "File `%s' dosn't exist" file)))
-
-(defun pacfiles--insert-footer-buttons ()
-  "Insert the `apply all' and `discard all' buttons."
-  (insert-text-button "[Apply All]"
-                      'help-echo "Write all merged files into the system."
-                      'follow-link t
-                      'face 'font-lock-keyword-face
-                      'action (lambda (_) (message "TODO: implement me")))
-  (insert "  ")
-  (insert-text-button "[Discard All]"
-                      'help-echo "Discard all merged files."
-                      'follow-link t
-                      'face 'font-lock-keyword-face)
-  'action (lambda (_) (message "TODO: implement me")))
 
 (defvar pacfiles-mode-map
   (let ((map (make-sparse-keymap)))
