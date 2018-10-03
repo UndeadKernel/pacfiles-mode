@@ -17,9 +17,7 @@ To determine the file-pair against which FILE will be merged, the extension of F
                         'action `(lambda (_)
                                    (ediff-merge-files ,update-file ,base-file nil
                                                       ;; location of the merged file-pair
-                                                      ,(cdr file-pair))
-                                   (debug)
-                                   (revert-buffer t t))
+                                                      ,(cdr file-pair)))
                         'face 'font-lock-keyword-face
                         'follow-link t)))
 
