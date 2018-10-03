@@ -11,7 +11,7 @@
 (defvar pacfiles--merge-file-tmp-location "/tmp/"
   "Location of temporary merged filed.")
 
-(defvar pacfiles--previous-window-conf nil
+(defvar pacfiles--previous-window-confs '()
   "The window configuration before `pacfiles' is called.")
 
 (defun pacfiles--display-buffer-fullscreen (buffer alist)
@@ -23,19 +23,20 @@
     (delete-other-windows window)
     window))
 
-(defun pacfiles--save-window-conf ()
-  "Save the current window configuration to later be restored by `pacfiles//restore-window-conf'."
-  (unless pacfiles--previous-window-conf
-    (setq pacfiles--previous-window-conf (current-window-configuration))))
+(defun pacfiles--push-window-conf ()
+  "Push the current window configuration to later be restored by `pacfiles--restore-window-conf'."
+  (let ((win-conf (current-window-configuration)))
+    (push win-conf pacfiles--previous-window-confs)))
 
-(defun pacfiles--restore-window-conf ()
-  "Bury or kill pacfiles' buffers according to KILL-BUFFER and restore the previous window configuration."
-  (when pacfiles--previous-window-conf
+(defun pacfiles--pop-window-conf ()
+  "Restore the first window configuration found in `pacfiles--previous-window-confs'."
+  (if pacfiles--previous-window-confs
     (condition-case nil
         (progn
-          (set-window-configuration pacfiles--previous-window-conf)
-          (setq pacfiles--previous-window-conf nil))
-      (error (error "Window configuration could not be restored")))))
+          (let ((win-conf (pop pacfiles--previous-window-confs)))
+            (set-window-configuration win-conf)))
+      (error "Window configuration could not be restored"))
+    (error "No window configurations to restore")))
 
 (provide 'pacfiles-win)
 ;;; pacfiles-win.el ends here
