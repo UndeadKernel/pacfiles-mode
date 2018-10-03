@@ -25,7 +25,9 @@
   "Find and manage pacman backup files in an Arch-based GNU/Linux system."
   (interactive)
   ;; Save the current window configuration so that it can be restored when we are finished.
-  (pacfiles--save-window-conf)
+  (pacfiles--push-window-conf)
+  ;; Save ediff varaibles that we modify to later restore them to the uers's value.
+  (pacfiles--save-ediff-conf)
   (let ((buffer (get-buffer-create pacfiles--files-buffer-name)))
     (display-buffer buffer '(pacfiles--display-buffer-fullscreen))
     (with-current-buffer buffer
@@ -35,8 +37,9 @@
 (defun pacfiles/quit ()
   "Quit pacfiles-mode and restore the previous window configuration."
   (interactive)
+  (pacfiles--restore-ediff-conf)
   (let ((buffer (get-buffer pacfiles--files-buffer-name)))
-    (pacfiles--restore-window-conf)
+    (pacfiles--pop-window-conf)
     (when buffer
       (kill-buffer buffer))))
 
@@ -145,6 +148,50 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
           'font-lock-face 'font-lock-string-face)))
     (error "File `%s' dosn't exist" file)))
 
+(defvar pacfiles--ediff-conf '()
+  "Alist that stores ediff variables and its values.")
+
+(defun pacfiles--var-to-cons (var)
+  "Create a cons of the VAR symbol and the value of VAR."
+  `(,var . ,(symbol-value var)))
+
+(defun pacfiles--cons-to-var (cons)
+  "Set the `car' of CONS to the `cdr' of CONS."
+  (let ((var (car cons)))
+    (set var (cdr cons))))
+
+;; (defmacro pacfiles--cons-to-var (cons)
+;;   "Set the `car' of CONS to the `cdr' of CONS."
+;;   `(setq ,(car (symbol-value cons)) (cdr ,cons)))
+
+(defun pacfiles--save-ediff-conf ()
+  "Save ediff variables we modify with their current values.
+We restore the saved variables after pacfiles-mode quits."
+  (require 'ediff)
+  (let ((vars-to-save
+         '(ediff-autostore-merges ediff-keep-variants ediff-window-setup-function
+           ediff-before-setup-hook ediff-quit-hook ediff-cleanup-hook ediff-quit-merge-hook
+           ediff-quit-hook)))
+    (dolist (var vars-to-save)
+            (push (pacfiles--var-to-cons var) pacfiles--ediff-conf))))
+
+(defun pacfiles--change-ediff-conf ()
+  "Change configuration variables of ediff to fit pacfiles-mode."
+  (setq ediff-autostore-merges nil)
+  (setq ediff-keep-variants t)
+  (setq ediff-window-setup-function #'ediff-setup-windows-plain)
+  (add-hook 'ediff-before-setup-hook #'pacfiles--push-window-conf)
+  (add-hook 'ediff-quit-hook #'pacfiles--pop-window-conf t)
+  (add-hook 'ediff-cleanup-hook #'pacfiles--clean-after-ediff)
+  (remove-hook 'ediff-quit-merge-hook #'ediff-maybe-save-and-delete-merge)
+  (add-hook 'ediff-quit-hook (lambda () (pacfiles/revert-buffer  t t))))
+
+(defun pacfiles--restore-ediff-conf ()
+    "Restore the ediff variables saved by `pacfiles--save-ediff-conf'."
+    (dolist (pair pacfiles--ediff-conf)
+      (pacfiles--cons-to-var pair))
+    (setq pacfiles--ediff-conf '()))
+
 (defvar pacfiles-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q")       #'pacfiles/quit)
@@ -180,7 +227,9 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
   (when (and (fboundp 'display-line-numbers-mode)
              (bound-and-true-p global-display-line-numbers-mode))
     (display-line-numbers-mode -1))
-  (setq revert-buffer-function #'pacfiles/revert-buffer)
+  (setq-local revert-buffer-function #'pacfiles/revert-buffer)
+  ;; configure ediff
+  (pacfiles--change-ediff-conf)
   ;; configure outline-mode
   (setq-local outline-blank-line t))
 
