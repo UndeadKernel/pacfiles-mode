@@ -38,5 +38,26 @@
       (error "Window configuration could not be restored"))
     (error "No window configurations to restore")))
 
+(defun pacfiles--clean-after-ediff ()
+  "Kill buffers that ediff has left behind. Ask user if merged file is modified."
+  (let ((window-a ediff-window-A)
+        (window-b ediff-window-B)
+        (window-c ediff-window-C))
+    ;; Save the merged buffer some times and kill it
+    (save-excursion
+      (select-window window-c t) ; buffer-c is made current
+      (when (and (buffer-modified-p)
+                 (y-or-n-p (format "'%s' was modified. Save before killing?" (buffer-name))))
+        (save-buffer))
+      (set-buffer-modified-p nil) ; Set buffer to not modified to not ask user
+      (kill-buffer))    ;; Kill file-a and file-b always. We want to explicitly set the current buffer
+    ;; ... to make sure that no function in `kill-buffer-query-functions' stops us.
+    (save-excursion
+      (select-window window-a t) ; buffer-a is made current
+      (message "killa %s" (kill-buffer)))
+    (save-excursion
+      (select-window window-b t) ; buffer-b is made current
+      (message "killb %s" (kill-buffer)))))
+
 (provide 'pacfiles-win)
 ;;; pacfiles-win.el ends here
