@@ -92,6 +92,11 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
   (goto-char 0))
 
 (defun pacfiles--insert-pending-files (files-alist merged-files file-type)
+(defun pacfiles/revert-buffer-no-confirm ()
+    "Revert the pacfiles list buffer without asking for confirmation."
+    (interactive)
+    (pacfiles/revert-buffer t t))
+
   "Insert files in FILES-ALIST if their `cdr' is not in MERGED-FILES.
 
 The FILE-TYPE specifies which type of update file we are processing.
@@ -181,6 +186,8 @@ We restore the saved variables after pacfiles-mode quits."
 (defvar pacfiles-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q")       #'pacfiles/quit)
+    (define-key map (kbd "g")       #'pacfiles/revert-buffer-no-confirm)
+    (define-key map (kbd "r")       #'pacfiles/revert-buffer-no-confirm)
     (define-key map (kbd "TAB")     #'outline-toggle-children)
     (define-key map (kbd "C-c C-p") #'outline-previous-heading)
     (define-key map (kbd "C-c C-n") #'outline-next-heading)
