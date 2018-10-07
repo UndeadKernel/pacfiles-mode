@@ -12,7 +12,7 @@
 (require 'pacfiles-win)
 (require 'pacfiles-diff)
 
-(defvar pacfiles-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
+(defvar pacfiles-updates-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
   "Command to find .pacnew files.")
 
 (defvar pacfiles--merge-search-command
@@ -57,7 +57,7 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
       (run-hooks 'before-revert-hook)
       ;; The actual revert mechanism starts here
       (let ((inhibit-read-only t)
-            (files (split-string (shell-command-to-string pacfiles-search-command) "\n" t))
+            (files (split-string (shell-command-to-string pacfiles-updates-search-command) "\n" t))
             (merged-files (split-string (shell-command-to-string pacfiles--merge-search-command) "\n" t))
             (pacnew-alist (list))
             (pacsave-alist (list)))
