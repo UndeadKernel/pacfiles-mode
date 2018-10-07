@@ -7,19 +7,35 @@
 (defun pacfiles--insert-merge-button (file-pair)
   "Insert a button to merge FILE-PAIR.
 
-To determine the file-pair against which FILE will be merged, the extension of FILE is removed."
+To determine the file-pair against which FILE will be merged, the extension of
+FILE is removed."
   (let* ((update-file (car file-pair))
          (base-file (file-name-sans-extension update-file)))
-    (insert-text-button "[merge]"
-                        'help-echo (format "Start merging '%s' and '%s'."
-                                           (file-name-nondirectory update-file)
-                                           (file-name-nondirectory base-file))
-                        'action `(lambda (_)
-                                   (ediff-merge-files ,update-file ,base-file nil
-                                                      ;; location of the merged file-pair
-                                                      ,(cdr file-pair)))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+    (if (file-exists-p base-file)
+        ;; Insert button that merges two files.
+        (insert-text-button "[merge]"
+                            'help-echo (format "Start merging '%s' and '%s'."
+                                               (file-name-nondirectory update-file)
+                                               (file-name-nondirectory base-file))
+                            'action `(lambda (_)
+                                       (ediff-merge-files ,update-file ,base-file nil
+                                                          ;; location of the merged file-pair
+                                                          ,(cdr file-pair)))
+                            'face 'font-lock-keyword-face
+                            'follow-link t)
+      ;; The base file doesn't exist.
+      ;; Insert button that just copies the update to the merge file.
+      (insert-text-button "[merge]"
+                            'help-echo (format "Merge '%s'."
+                                               (file-name-nondirectory update-file))
+                            'action `(lambda (_)
+                                       (when (y-or-n-p
+                                              (format "Base file '%s' not found. Use '%s' as is? "
+                                                      ,base-file ,update-file))
+                                         (copy-file ,update-file ,(cdr file-pair))
+                                         (revert-buffer t t)))
+                            'face 'font-lock-keyword-face
+                            'follow-link t))))
 
 (defun pacfiles--insert-view-merge-button (file-pair)
   "Insert a button that displays the merge in FILE-PAIR."
