@@ -41,7 +41,11 @@ To determine the file-pair against which FILE will be merged, the extension of F
                                            (file-name-sans-extension (file-name-nondirectory update-file)))
                         'action `(lambda (_)
                                    (let ((del-file (pacfiles--add-sudo-maybe ,merge-file :write)))
-                                     (delete-file del-file))
+                                     (when (y-or-n-p (format  "Discard the merge between '%s' and '%s'? "
+                                                              ,update-file
+                                                              ,(file-name-sans-extension update-file)))
+                                       (delete-file del-file)
+                                       (message "Merge discarded!")))
                                    (revert-buffer t t))
                         'face 'font-lock-keyword-face
                         'follow-link t)))
