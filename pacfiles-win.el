@@ -70,5 +70,14 @@ EDIFF windows.")
       (message "killb %s" (kill-buffer)) ; TODO: remove debug message
       (switch-to-buffer empty-buffer))))
 
+(defun pacfiles--create-view-buffer (name file)
+  "Show FILE in a new buffer named NAME that pacfiles will manage."
+  (let ((view-buffer
+         (get-buffer-create (concat "*pacfiles: merge-" name "*"))))
+    (with-current-buffer view-buffer
+      (insert-file-contents file nil nil nil t)
+      (read-only-mode)
+      view-buffer)))
+
 (provide 'pacfiles-win)
 ;;; pacfiles-win.el ends here

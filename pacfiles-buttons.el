@@ -21,6 +21,36 @@ To determine the file-pair against which FILE will be merged, the extension of F
                         'face 'font-lock-keyword-face
                         'follow-link t)))
 
+(defun pacfiles--insert-view-merge-button (file-pair)
+  "Insert a button that displays the merge in FILE-PAIR."
+  (let* ((file-update (car file-pair))
+         (file-base (file-name-sans-extension file-update))
+         (file-merge (cdr file-pair)))
+    (insert-text-button "[view]"
+                        'help-echo (format "View the merge of '%s' with '%s'."
+                                           (file-name-nondirectory file-update)
+                                           (file-name-nondirectory file-base))
+                        'action `(lambda (_)
+                                   (let ((window (split-window-right)))
+                                     (select-window window)
+                                     (set-window-buffer window
+                                      (pacfiles--create-view-buffer
+                                       (file-name-nondirectory ,file-base) ,file-merge))))
+                        'face 'font-lock-keyword-face
+                        'follow-link t)))
+
+(defun pacfiles--insert-diff-button (file-update)
+  "Insert a button that displays a diff of the update FILE-UPDATE and its base file."
+  (let ((file-base (file-name-sans-extension file-update)))
+    (when (file-exists-p file-base)
+      (insert-text-button "[diff]"
+                          'help-echo (format "Diff '%s' with '%s'."
+                                             (file-name-nondirectory file-update)
+                                             (file-name-nondirectory file-base))
+                          'action `(lambda (_) (ediff-files ,file-update ,file-base))
+                          'face 'font-lock-keyword-face
+                          'follow-link t))))
+
 (defun pacfiles--insert-apply-button (file-pair)
   "Insert a button that copies the `cdr' of FILE-PAIR to its `car'."
   (let ((merge-file (cdr file-pair))
