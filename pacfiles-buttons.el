@@ -53,12 +53,24 @@ To determine the file-pair against which FILE will be merged, the extension of F
 
 (defun pacfiles--insert-apply-button (file-pair)
   "Insert a button that copies the `cdr' of FILE-PAIR to its `car'."
-  (let ((merge-file (cdr file-pair))
-        (destination-file (car file-pair)))
-    (insert-text-button "[merge]"
-                        'help-echo (format "Apply the merge of `%s' to the file system."
-                                           (file-name-sans-extension (file-name-nondirectory destination-file)))
-                        'action `(lambda (_) (message "TODO: Copy `%s' to `%s'" ,merge-file ,destination-file))
+  (let* ((merge-file (cdr file-pair))
+        (update-file (car file-pair))
+        (destination-file (file-name-sans-extension update-file)))
+    (insert-text-button "[apply]"
+                        'help-echo (format "Apply the merge of '%s' and '%s' to the file system."
+                                           (file-name-nondirectory update-file)
+                                           (file-name-sans-extension (file-name-nondirectory update-file)))
+                        'action `(lambda (_)
+                                   (when (y-or-n-p (format "Apply the merge and overwrite '%s'? "
+                                                           ,destination-file))
+                                     (copy-file ,merge-file
+                                                (pacfiles--add-sudo-maybe ,destination-file :write)
+                                                t)
+                                     ;; Delete the merge and update files
+                                     (delete-file (pacfiles--add-sudo-maybe ,merge-file :write))
+                                     (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
+                                     (revert-buffer t t)
+                                     (message "Merge applied!")))
                         'face 'font-lock-keyword-face
                         'follow-link t)))
 
