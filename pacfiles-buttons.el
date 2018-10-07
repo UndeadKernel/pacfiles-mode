@@ -95,7 +95,7 @@ FILE is removed."
   (let ((merge-file (cdr file-pair))
         (update-file (car file-pair)))
     (insert-text-button "[discard]"
-                        'help-echo (format "Delete the merge of `%s' from the file system."
+                        'help-echo (format "Delete the merge of '%s' from the file system."
                                            (file-name-sans-extension (file-name-nondirectory update-file)))
                         'action `(lambda (_)
                                    (let ((del-file (pacfiles--add-sudo-maybe ,merge-file :write)))
