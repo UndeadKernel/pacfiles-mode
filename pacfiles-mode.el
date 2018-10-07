@@ -11,6 +11,7 @@
 (require 'pacfiles-utils)
 (require 'pacfiles-win)
 
+
 (defvar pacfiles-updates-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
   "Command to find .pacnew files.")
 
@@ -106,7 +107,9 @@ The FILE-TYPE specifies which type of update file we are processing."
         (insert (propertize "--- no pending files ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair pending-alist)
         (pacfiles--insert-merge-button file-pair)
+        (insert " ")
         (pacfiles--insert-diff-button (car file-pair))
+        (insert " ")
         (pacfiles--insert-delete-button file-pair)
         (insert " " (car file-pair) " ")
         (pacfiles--insert-days-old (car file-pair))
@@ -119,7 +122,9 @@ The FILE-TYPE specifies which type of update file we are processing."
         (insert (propertize "--- no merge files ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair merged-alist)
         (pacfiles--insert-apply-button file-pair)
+        (insert " ")
         (pacfiles--insert-view-merge-button file-pair)
+        (insert " ")
         (pacfiles--insert-discard-button file-pair)
         (insert " " (car file-pair) " ")
         ;; calculate how many days old is the merged file
@@ -155,7 +160,7 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
          (propertize
           (format "(%.1f day[s] since created)" (time-to-number-of-days (time-since time-file)))
           'font-lock-face 'font-lock-string-face)))
-    (error "File `%s' dosn't exist" file)))
+    (error "File '%s' dosn't exist" file)))
 
 (defun pacfiles--save-ediff-conf ()
   "Save ediff variables we modify with the user's current values.
@@ -202,7 +207,7 @@ We restore the saved variables after pacfiles-mode quits."
 (define-derived-mode pacfiles-mode outline-mode "pacfiles"
   :syntax-table nil
   :abbrev-table nil
-  "Major mode for managing .pacnew and. pacsave files."
+  "Major mode for managing .pacnew and .pacsave files."
   ;; If the buffer is not the one we create, do nothing and error out.
   (when (not (string= (buffer-name) pacfiles--files-buffer-name))
     (user-error "Use the command `pacfiles' instead of `pacfiles-mode' to start pacfiles-mode")

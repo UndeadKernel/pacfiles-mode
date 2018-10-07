@@ -73,7 +73,7 @@ EDIFF windows.")
 (defun pacfiles--create-view-buffer (name file)
   "Show FILE in a new buffer named NAME that pacfiles will manage."
   (let ((view-buffer
-         (get-buffer-create (concat "*pacfiles: merge-" name "*"))))
+         (get-buffer-create (concat "*pacfiles:merge-" name "*"))))
     (with-current-buffer view-buffer
       (insert-file-contents file nil nil nil t)
       (read-only-mode)
