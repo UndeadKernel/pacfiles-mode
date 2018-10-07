@@ -108,6 +108,21 @@ FILE is removed."
                         'face 'font-lock-keyword-face
                         'follow-link t)))
 
+(defun pacfiles--insert-delete-button (file-pair)
+  "Insert a button that deletes the file in the `car' of FILE-PAIR."
+  (let ((update-file (car file-pair)))
+    (insert-text-button "[delete]"
+                        'help-echo (format "Delete '%s' from the file system."
+                                           (file-name-nondirectory update-file))
+                        'action `(lambda (_)
+                                   (when (y-or-n-p (format "Delete '%s' permanently? "
+                                                           ,update-file))
+                                     (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
+                                     (message "File deleted!"))
+                                   (revert-buffer t t))
+                        'face 'font-lock-keyword-face
+                        'follow-link t)))
+
 (defun pacfiles--insert-footer-buttons ()
   "Insert the `apply all' and `discard all' buttons."
   (insert-text-button "[Apply All]"

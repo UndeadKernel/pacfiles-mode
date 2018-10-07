@@ -107,6 +107,7 @@ The FILE-TYPE specifies which type of update file we are processing."
       (dolist (file-pair pending-alist)
         (pacfiles--insert-merge-button file-pair)
         (pacfiles--insert-diff-button (car file-pair))
+        (pacfiles--insert-delete-button file-pair)
         (insert " " (car file-pair) " ")
         (pacfiles--insert-days-old (car file-pair))
         (insert "\n")))))
