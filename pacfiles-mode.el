@@ -10,7 +10,6 @@
 (require 'pacfiles-buttons)
 (require 'pacfiles-utils)
 (require 'pacfiles-win)
-(require 'pacfiles-diff)
 
 (defvar pacfiles-updates-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
   "Command to find .pacnew files.")
