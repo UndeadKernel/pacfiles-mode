@@ -103,7 +103,7 @@ The FILE-TYPE specifies which type of update file we are processing."
   ;; Keep files in FILES-ALIST which don't have a cdr in MERGED-FILES.
   (let ((pending-alist (remove-if (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null pending-alist)
-        (insert (propertize "--- no files to merge ---\n" 'font-lock-face 'font-lock-comment-face))
+        (insert (propertize "--- no files to update ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair pending-alist)
         (pacfiles--insert-merge-button file-pair)
         (pacfiles--insert-diff-button (car file-pair))
