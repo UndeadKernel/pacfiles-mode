@@ -99,8 +99,7 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
 (defun pacfiles--insert-pending-files (files-alist merged-files)
   "Insert files in FILES-ALIST if their `cdr' is not in MERGED-FILES.
 
-The FILE-TYPE specifies which type of update file we are processing.
-The FILE-TYPE argument can be either \":pacnew\" or \":pacsave\"."
+The FILE-TYPE specifies which type of update file we are processing."
   ;; Keep files in FILES-ALIST which don't have a cdr in MERGED-FILES.
   (let ((pending-alist (remove-if (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null pending-alist)
@@ -113,7 +112,7 @@ The FILE-TYPE argument can be either \":pacnew\" or \":pacsave\"."
         (insert "\n")))))
 
 (defun pacfiles--insert-merged-files (files-alist merged-files)
-  "Insert files in FILES-ALIST that have an associated file in MERGED-FILES of type FILE-TYPE."
+  "Insert files in FILES-ALIST that have an associated file in MERGED-FILES."
   (let ((merged-alist (remove-if-not (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null merged-alist)
         (insert (propertize "--- no files merged ---\n" 'font-lock-face 'font-lock-comment-face))
