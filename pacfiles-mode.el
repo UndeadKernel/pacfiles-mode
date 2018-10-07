@@ -38,6 +38,8 @@
   "Quit pacfiles-mode and restore the previous window configuration."
   (interactive)
   (pacfiles--restore-ediff-conf)
+  (when (get-buffer pacfiles--empty-buffer-name)
+    (kill-buffer pacfiles--empty-buffer-name))
   (let ((buffer (get-buffer pacfiles--files-buffer-name)))
     (pacfiles--pop-window-conf)
     (when buffer

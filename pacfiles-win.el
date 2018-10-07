@@ -14,6 +14,12 @@
 (defvar pacfiles--previous-window-confs '()
   "The window configuration before `pacfiles' is called.")
 
+(defvar pacfiles--empty-buffer-name "*pacfiles:empty-buffer*"
+  "Empty buffer meant to replace buffers killed in EDIFF windows.
+Doing this replacement avoids having multiple windows open with the same buffer.
+Having the same buffer open in multiple windows might break the proper killing of
+EDIFF windows.")
+
 (defun pacfiles--display-buffer-fullscreen (buffer alist)
   "Display BUFFER fullscreen taking ALIST into account."
   (when-let (window (or (display-buffer-reuse-window buffer alist)
@@ -42,22 +48,27 @@
   "Kill buffers that ediff has left behind. Ask user if merged file is modified."
   (let ((window-a ediff-window-A)
         (window-b ediff-window-B)
-        (window-c ediff-window-C))
-    ;; Save the merged buffer some times and kill it
-    (save-excursion
-      (select-window window-c t) ; buffer-c is made current
-      (when (and (buffer-modified-p)
-                 (y-or-n-p (format "'%s' was modified. Save before killing?" (buffer-name))))
-        (save-buffer))
-      (set-buffer-modified-p nil) ; Set buffer to not modified to not ask user
-      (kill-buffer))    ;; Kill file-a and file-b always. We want to explicitly set the current buffer
+        (window-c ediff-window-C)
+        (empty-buffer (get-buffer-create pacfiles--empty-buffer-name)))
+    ;; Save the merged buffer if the user wants and kill it
+    (when window-c ; window-c is nil when diffing instead or merging
+      (save-excursion
+        (select-window window-c t) ; buffer-c is made current
+        (when (and (buffer-modified-p)
+                   (y-or-n-p (format "'%s' was modified. Save before killing?" (buffer-name))))
+          (save-buffer))
+        (set-buffer-modified-p nil) ; Set buffer to not modified to not ask user
+        (kill-buffer)
+        (switch-to-buffer empty-buffer)))    ;; Kill file-a and file-b always. We want to explicitly set the current buffer
     ;; ... to make sure that no function in `kill-buffer-query-functions' stops us.
     (save-excursion
-      (select-window window-a t) ; buffer-a is made current
-      (message "killa %s" (kill-buffer)))
+      (select-window window-a t) ; this makes buffer-a current
+      (message "killa %s" (kill-buffer)) ; TODO: remove debug message
+      (switch-to-buffer empty-buffer))
     (save-excursion
-      (select-window window-b t) ; buffer-b is made current
-      (message "killb %s" (kill-buffer)))))
+      (select-window window-b t) ; this makes buffer-b current
+      (message "killb %s" (kill-buffer)) ; TODO: remove debug message
+      (switch-to-buffer empty-buffer))))
 
 (provide 'pacfiles-win)
 ;;; pacfiles-win.el ends here
