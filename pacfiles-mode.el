@@ -76,27 +76,27 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
         (insert "\n\n" "** PACNEW files" "\n")
         (insert "\n" "*** pending" "\n")
         ;; Display the .pacnew files that need merging
-        (pacfiles--insert-pending-files pacnew-alist merged-files :pacnew)
+        (pacfiles--insert-pending-files pacnew-alist merged-files)
         (insert "\n" "*** merged" "\n")
         ;; Display .pacnew files that have an associated merge file.
-        (pacfiles--insert-merged-files pacnew-alist merged-files :pacnew)
+        (pacfiles--insert-merged-files pacnew-alist merged-files)
         ;; --- Process .pacsave files ---
         (insert "\n\n" "** PACSAVE files" "\n")
         (insert "\n" "*** pending" "\n")
         ;; Display the .pacsave files that need merging
-        (pacfiles--insert-pending-files pacsave-alist merged-files :pacsave)
+        (pacfiles--insert-pending-files pacsave-alist merged-files)
         (insert "\n" "*** merged" "\n")
-        (pacfiles--insert-merged-files pacsave-alist merged-files :pacsave)
+        (pacfiles--insert-merged-files pacsave-alist merged-files)
         (insert "\n\n")
         (pacfiles--insert-footer-buttons))))
   (goto-char 0))
 
-(defun pacfiles--insert-pending-files (files-alist merged-files file-type)
 (defun pacfiles/revert-buffer-no-confirm ()
     "Revert the pacfiles list buffer without asking for confirmation."
     (interactive)
     (pacfiles/revert-buffer t t))
 
+(defun pacfiles--insert-pending-files (files-alist merged-files)
   "Insert files in FILES-ALIST if their `cdr' is not in MERGED-FILES.
 
 The FILE-TYPE specifies which type of update file we are processing.
@@ -107,24 +107,26 @@ The FILE-TYPE argument can be either \":pacnew\" or \":pacsave\"."
         (insert (propertize "--- no files to merge ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair pending-alist)
         (pacfiles--insert-merge-button file-pair)
+        (pacfiles--insert-diff-button (car file-pair))
         (insert " " (car file-pair) " ")
-        (pacfiles--insert-days-old (car file-pair) (if (eq file-type :pacnew) nil t))
+        (pacfiles--insert-days-old (car file-pair))
         (insert "\n")))))
 
-(defun pacfiles--insert-merged-files (files-alist merged-files file-type)
+(defun pacfiles--insert-merged-files (files-alist merged-files)
   "Insert files in FILES-ALIST that have an associated file in MERGED-FILES of type FILE-TYPE."
   (let ((merged-alist (remove-if-not (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null merged-alist)
         (insert (propertize "--- no files merged ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair merged-alist)
         (pacfiles--insert-apply-button file-pair)
+        (pacfiles--insert-view-merge-button file-pair)
         (pacfiles--insert-discard-button file-pair)
         (insert " " (car file-pair) " ")
         ;; calculate how many days old is the merged file
         (pacfiles--insert-days-created (cdr file-pair))
         (insert "\n")))))
 
-(defun pacfiles--insert-days-old (file &optional reverse-order)
+(defun pacfiles--insert-days-old (file)
   "Insert how many days passed between FILE and FILE without its extension.
 
 If REVERSE-ORDER is non-nil, calculate the time difference as
@@ -133,15 +135,16 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
          (time-base-file
           (time-to-seconds (file-attribute-modification-time (file-attributes base-file))))
          (time-file
-          (time-to-seconds (file-attribute-modification-time (file-attributes file)))))
+          (time-to-seconds (file-attribute-modification-time (file-attributes file))))
+         (reverse-time (< time-file time-base-file)))
     (when (file-exists-p base-file)
         (insert
          (propertize
           (format "(%.1f %s)"
                   (time-to-number-of-days
-                   (cond ((bound-and-true-p reverse-order) (time-subtract time-base-file time-file))
-                         (t (time-subtract time-file time-base-file))))
-                  (if reverse-order "day[s] old" "day[s] ahead"))
+                   (cond (reverse-time (time-subtract time-base-file time-file))
+                         (t            (time-subtract time-file time-base-file))))
+                  (if reverse-time "day[s] old" "day[s] ahead"))
           'font-lock-face 'font-lock-warning-face)))))
 
 (defun pacfiles--insert-days-created (file)
