@@ -41,14 +41,8 @@
   "Quit pacfiles-mode and restore the previous window configuration."
   (interactive)
   (pacfiles--restore-ediff-conf)
-  ;; Kill buffers we create
-  (let ((empty-buffer (get-buffer pacfiles--empty-buffer-name))
-        (files-buffer (get-buffer pacfiles--files-buffer-name)))
-    (when empty-buffer
-      (kill-buffer empty-buffer))
-    (when files-buffer
-      (kill-buffer files-buffer)))
-  ;; Get back to the user's previous window configuration
+  ;; Kill buffers we create which start with '*pacfiles:'
+  (kill-matching-buffers "^\\*pacfiles:.*" t t)
   (pacfiles--pop-window-conf))
 
 ;; Main function that displays the contents of the PACFILES buffer.
