@@ -41,12 +41,15 @@
   "Quit pacfiles-mode and restore the previous window configuration."
   (interactive)
   (pacfiles--restore-ediff-conf)
-  (when (get-buffer pacfiles--empty-buffer-name)
-    (kill-buffer pacfiles--empty-buffer-name))
-  (let ((buffer (get-buffer pacfiles--files-buffer-name)))
-    (pacfiles--pop-window-conf)
-    (when buffer
-      (kill-buffer buffer))))
+  ;; Kill buffers we create
+  (let ((empty-buffer (get-buffer pacfiles--empty-buffer-name))
+        (files-buffer (get-buffer pacfiles--files-buffer-name)))
+    (when empty-buffer
+      (kill-buffer empty-buffer))
+    (when files-buffer
+      (kill-buffer files-buffer)))
+  ;; Get back to the user's previous window configuration
+  (pacfiles--pop-window-conf))
 
 ;; Main function that displays the contents of the PACFILES buffer.
 (defun pacfiles/revert-buffer (&optional ignore-auto noconfirm)
