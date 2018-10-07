@@ -21,6 +21,14 @@ PERMISSION is either \":read\" or \":write\""
 	    (error "Could not %s \"%s\"" (if (eq permission :read) "read" "write") file-path)))
     apt-path))
 
+(defun pacfiles--var-to-cons (var)
+  "Create a cons of the VAR symbol and the value of VAR."
+  `(,var . ,(symbol-value var)))
+
+(defun pacfiles--cons-to-var (cons)
+  "Set the `car' of CONS to the `cdr' of CONS."
+  (let ((var (car cons)))
+    (set var (cdr cons))))
 
 (provide 'pacfiles-utils)
 ;;; pacfiles-utils.el ends here

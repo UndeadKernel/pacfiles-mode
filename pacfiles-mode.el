@@ -19,6 +19,9 @@
   (concat "find " pacfiles--merge-file-tmp-location " -name '*.pacmerge' 2>/dev/null")
   "Command to search for temporarily merged files.")
 
+(defvar pacfiles--ediff-conf '()
+  "Alist that stores ediff variables and its values.")
+
 
 (defalias 'pacfiles 'pacfiles/start)
 (defun pacfiles/start ()
@@ -150,38 +153,23 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
           'font-lock-face 'font-lock-string-face)))
     (error "File `%s' dosn't exist" file)))
 
-(defvar pacfiles--ediff-conf '()
-  "Alist that stores ediff variables and its values.")
-
-(defun pacfiles--var-to-cons (var)
-  "Create a cons of the VAR symbol and the value of VAR."
-  `(,var . ,(symbol-value var)))
-
-(defun pacfiles--cons-to-var (cons)
-  "Set the `car' of CONS to the `cdr' of CONS."
-  (let ((var (car cons)))
-    (set var (cdr cons))))
-
-;; (defmacro pacfiles--cons-to-var (cons)
-;;   "Set the `car' of CONS to the `cdr' of CONS."
-;;   `(setq ,(car (symbol-value cons)) (cdr ,cons)))
-
 (defun pacfiles--save-ediff-conf ()
-  "Save ediff variables we modify with their current values.
+  "Save ediff variables we modify with the user's current values.
 We restore the saved variables after pacfiles-mode quits."
   (require 'ediff)
   (let ((vars-to-save
          '(ediff-autostore-merges ediff-keep-variants ediff-window-setup-function
            ediff-before-setup-hook ediff-quit-hook ediff-cleanup-hook ediff-quit-merge-hook
-           ediff-quit-hook)))
+           ediff-quit-hook ediff-split-window-function)))
     (dolist (var vars-to-save)
             (push (pacfiles--var-to-cons var) pacfiles--ediff-conf))))
 
 (defun pacfiles--change-ediff-conf ()
-  "Change configuration variables of ediff to fit pacfiles-mode."
-  (setq ediff-autostore-merges nil)
-  (setq ediff-keep-variants t)
-  (setq ediff-window-setup-function #'ediff-setup-windows-plain)
+  "Change ediff's configuration variables to fit pacfiles-mode."
+  (setq ediff-autostore-merges nil
+        ediff-keep-variants t
+        ediff-window-setup-function #'ediff-setup-windows-plain
+        ediff-split-window-function #'split-window-horizontally)
   (add-hook 'ediff-before-setup-hook #'pacfiles--push-window-conf)
   (add-hook 'ediff-quit-hook #'pacfiles--pop-window-conf t)
   (add-hook 'ediff-cleanup-hook #'pacfiles--clean-after-ediff)
