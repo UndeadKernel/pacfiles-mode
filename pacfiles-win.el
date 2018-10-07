@@ -63,11 +63,9 @@ EDIFF windows.")
     ;; ... to make sure that no function in `kill-buffer-query-functions' stops us.
     (save-excursion
       (select-window window-a t) ; this makes buffer-a current
-      (message "killa %s" (kill-buffer)) ; TODO: remove debug message
       (switch-to-buffer empty-buffer))
     (save-excursion
       (select-window window-b t) ; this makes buffer-b current
-      (message "killb %s" (kill-buffer)) ; TODO: remove debug message
       (switch-to-buffer empty-buffer))))
 
 (defun pacfiles--create-view-buffer (name file)
