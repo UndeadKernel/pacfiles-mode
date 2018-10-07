@@ -3,6 +3,59 @@
 ;;; Commentary:
 ;;; Code:
 
+(defgroup pacfiles-button-faces nil "Faces for the buttons used in pacfiles-mode.")
+
+(defface pacfiles--apply-all-face
+  '((t (:inherit 'button :height 1.3)))
+  "Face for the Apply All button."
+  :group 'pacfiles-button-faces)
+
+(defface pacfiles--discard-all-face
+  '((t (:inherit 'button :height 1.3)))
+  "Face for the Apply All button."
+  :group 'pacfiles-button-faces)
+
+(defface pacfiles--discard-face
+  '((t (:inherit 'warning :weight bold :underline t)))
+  "Face for the Apply All button."
+  :group 'pacfiles-button-faces)
+
+(defface pacfiles--delete-face
+  '((t (:inherit 'error :weight bold :underline t)))
+  "Face for the Apply All button."
+  :group 'pacfiles-button-faces)
+
+
+(define-button-type 'pacfiles--button-apply-all
+  'face 'pacfiles--apply-all-face
+  'follow-link t)
+
+(define-button-type 'pacfiles--button-discard-all
+  'face 'pacfiles--discard-all-face
+  'follow-link t)
+
+(define-button-type 'pacfiles--button-apply
+  'face 'button
+  'follow-link t)
+
+(define-button-type 'pacfiles--button-discard
+  'face 'pacfiles--discard-face
+  'follow-link t)
+
+(define-button-type 'pacfiles--button-delete
+  'face 'pacfiles--delete-face
+  'follow-link t)
+
+(define-button-type 'pacfiles--button-generic
+  'face 'button
+  'follow-link t)
+
+
+(defvar pacfiles-activate-no-confirm nil
+  "Do not ask for user input when applying or discarding a merged file.")
+
+(defvar pacfiles--inhibit-button-revert nil
+  "Clicking a button does not revert the pacfiles list buffer.")
 
 (defun pacfiles--insert-merge-button (file-pair)
   "Insert a button to merge FILE-PAIR.
@@ -21,8 +74,7 @@ FILE is removed."
                                        (ediff-merge-files ,update-file ,base-file nil
                                                           ;; location of the merged file-pair
                                                           ,(cdr file-pair)))
-                            'face 'font-lock-keyword-face
-                            'follow-link t)
+                            'type 'pacfiles--button-generic)
       ;; The base file doesn't exist.
       ;; Insert button that just copies the update to the merge file.
       (insert-text-button "[merge]"
@@ -33,9 +85,8 @@ FILE is removed."
                                               (format "Base file '%s' not found. Use '%s' as is? "
                                                       ,base-file ,update-file))
                                          (copy-file ,update-file ,(cdr file-pair))
-                                         (revert-buffer t t)))
-                            'face 'font-lock-keyword-face
-                            'follow-link t))))
+                                         (when (not pacfiles--inhibit-button-revert) (revert-buffer t t))))
+                            'type 'pacfiles--button-generic))))
 
 (defun pacfiles--insert-view-merge-button (file-pair)
   "Insert a button that displays the merge in FILE-PAIR."
@@ -52,8 +103,7 @@ FILE is removed."
                                      (set-window-buffer window
                                       (pacfiles--create-view-buffer
                                        (file-name-nondirectory ,file-base) ,file-merge))))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+                        'type 'pacfiles--button-generic)))
 
 (defun pacfiles--insert-diff-button (file-update)
   "Insert a button that displays a diff of the update FILE-UPDATE and its base file."
@@ -64,8 +114,7 @@ FILE is removed."
                                              (file-name-nondirectory file-update)
                                              (file-name-nondirectory file-base))
                           'action `(lambda (_) (ediff-files ,file-update ,file-base))
-                          'face 'font-lock-keyword-face
-                          'follow-link t))))
+                          'type 'pacfiles--button-generic))))
 
 (defun pacfiles--insert-apply-button (file-pair)
   "Insert a button that copies the `cdr' of FILE-PAIR to its `car'."
@@ -77,18 +126,18 @@ FILE is removed."
                                            (file-name-nondirectory update-file)
                                            (file-name-sans-extension (file-name-nondirectory update-file)))
                         'action `(lambda (_)
-                                   (when (y-or-n-p (format "Apply the merge and overwrite '%s'? "
-                                                           ,destination-file))
+                                   (when (or pacfiles-activate-no-confirm
+                                             (y-or-n-p (format "Apply the merge and overwrite '%s'? "
+                                                               ,destination-file)))
                                      (copy-file ,merge-file
                                                 (pacfiles--add-sudo-maybe ,destination-file :write)
                                                 t)
                                      ;; Delete the merge and update files
                                      (delete-file (pacfiles--add-sudo-maybe ,merge-file :write))
                                      (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
-                                     (revert-buffer t t)
+                                     (when (not pacfiles--inhibit-button-revert) (revert-buffer t t))
                                      (message "Merge applied!")))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+                        'type 'pacfiles--button-apply)))
 
 (defun pacfiles--insert-discard-button (file-pair)
   "Insert button that deletes the `cdr' of FILE-PAIR from the file system."
@@ -99,14 +148,14 @@ FILE is removed."
                                            (file-name-sans-extension (file-name-nondirectory update-file)))
                         'action `(lambda (_)
                                    (let ((del-file (pacfiles--add-sudo-maybe ,merge-file :write)))
-                                     (when (y-or-n-p (format  "Discard the merge between '%s' and '%s'? "
-                                                              ,update-file
-                                                              ,(file-name-sans-extension update-file)))
+                                     (when (or pacfiles-activate-no-confirm
+                                               (y-or-n-p (format  "Discard the merge between '%s' and '%s'? "
+                                                                  ,update-file
+                                                                  ,(file-name-sans-extension update-file))))
                                        (delete-file del-file)
                                        (message "Merge discarded!")))
-                                   (revert-buffer t t))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+                                   (when (not pacfiles--inhibit-button-revert) (revert-buffer t t)))
+                        'type 'pacfiles--button-discard)))
 
 (defun pacfiles--insert-delete-button (file-pair)
   "Insert a button that deletes the file in the `car' of FILE-PAIR."
@@ -119,23 +168,43 @@ FILE is removed."
                                                            ,update-file))
                                      (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
                                      (message "File deleted!"))
-                                   (revert-buffer t t))
-                        'face 'font-lock-keyword-face
-                        'follow-link t)))
+                                   (when (not pacfiles--inhibit-button-revert) (revert-buffer t t)))
+                        'type 'pacfiles--button-delete)))
 
 (defun pacfiles--insert-footer-buttons ()
   "Insert the `apply all' and `discard all' buttons."
   (insert-text-button "[Apply All]"
                       'help-echo "Write all merged files into the system."
-                      'follow-link t
-                      'face 'font-lock-keyword-face
-                      'action (lambda (_) (message "TODO: implement me")))
+                      'action (lambda (_)
+                                (pacfiles--activate-all-buttons 'pacfiles--button-apply "apply"))
+                      'type 'pacfiles--button-apply-all)
   (insert "  ")
   (insert-text-button "[Discard All]"
                       'help-echo "Discard all merged files."
-                      'follow-link t
-                      'face 'font-lock-keyword-face)
-  'action (lambda (_) (message "TODO: implement me")))
+                      'action (lambda (_)
+                                (pacfiles--activate-all-buttons 'pacfiles--button-discard "discard"))
+                      'type 'pacfiles--button-discard-all))
+
+(defun pacfiles--activate-all-buttons (activate-type action-name)
+  "Find all buttons with button type ACTIVATE-TYPE and activate them.
+Use ACTION-NAME to display an appropriate warning message."
+  (when (y-or-n-p (concat (capitalize action-name) " all merged files? "))
+    (save-excursion
+      (goto-char (point-min))
+      ;; Catch errors that `forward-button' might throw.
+      (condition-case nil
+          (let* ((pacfiles-activate-no-confirm t) ; do not ask the user
+                 (pacfiles--inhibit-button-revert t)
+                 (button (forward-button 1 nil nil))
+                 (type (button-type button)))
+            ;; Iterate until we find the first footer button.
+            (while (not (eq type 'pacfiles--button-apply-all))
+              (when (eq type activate-type)
+                (button-activate button))
+              (setq button (forward-button 1 nil nil)
+                    type (button-type button))))))
+    (message "Done!")
+    (revert-buffer t t)))
 
 
 (provide 'pacfiles-buttons)
