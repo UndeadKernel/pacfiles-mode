@@ -55,7 +55,7 @@ EDIFF windows.")
       (save-excursion
         (select-window window-c t) ; buffer-c is made current
         (when (and (buffer-modified-p)
-                   (y-or-n-p (format "'%s' was modified. Save before killing?" (buffer-name))))
+                   (y-or-n-p (format "'%s' was modified. Save before killing? " (buffer-name))))
           (save-buffer))
         (set-buffer-modified-p nil) ; Set buffer to not modified to not ask user
         (kill-buffer)
