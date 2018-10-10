@@ -16,7 +16,7 @@
   "Command to find .pacnew files.")
 
 (defvar pacfiles--merge-search-command
-  (concat "find " pacfiles--merge-file-tmp-location " -name '*.pacmerge' 2>/dev/null")
+  (concat "find " pacfiles-merge-file-tmp-location " -name '*.pacmerge' 2>/dev/null")
   "Command to search for temporarily merged files.")
 
 (defvar pacfiles--ediff-conf '()
@@ -66,7 +66,7 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
         ;; Split .pacnew and .pacsave files
         (dolist (file files)
           ;; Associate each FILE in FILES with a file to hold the merge
-          (let ((merge-file (pacfiles--calculate-merge-file file pacfiles--merge-file-tmp-location)))
+          (let ((merge-file (pacfiles--calculate-merge-file file pacfiles-merge-file-tmp-location)))
             (cond
              ((string-match-p ".pacnew" file)
               (push (cons file merge-file) pacnew-alist))
