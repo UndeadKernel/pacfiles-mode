@@ -129,9 +129,15 @@ FILE is removed."
                                    (when (or pacfiles-activate-no-confirm
                                              (y-or-n-p (format "Apply the merge and overwrite '%s'? "
                                                                ,destination-file)))
-                                     (copy-file ,merge-file
-                                                (pacfiles--add-sudo-maybe ,destination-file :write)
-                                                t)
+                                     ;; Copy and keep the destination file's permissions and user/group
+                                     (let* ((dst-file (pacfiles--add-sudo-maybe ,destination-file :write))
+                                            (dst-attrs (file-attributes dst-file 'integer))
+                                            (dst-uid (file-attribute-user-id dst-attrs))
+                                            (dst-gid (file-attribute-group-id dst-attrs))
+                                            (dst-mode (file-modes dst-file)))
+                                       (copy-file ,merge-file dst-file t)
+                                       (set-file-modes dst-file dst-mode)
+                                       (tramp-set-file-uid-gid dst-file dst-uid dst-gid))
                                      ;; Delete the merge and update files
                                      (delete-file (pacfiles--add-sudo-maybe ,merge-file :write))
                                      (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
