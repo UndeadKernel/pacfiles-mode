@@ -65,16 +65,18 @@ FILE is removed."
   (let* ((update-file (car file-pair))
          (base-file (file-name-sans-extension update-file)))
     (if (file-exists-p base-file)
-        ;; Insert button that merges two files.
-        (insert-text-button "[merge]"
-                            'help-echo (format "Start merging '%s' and '%s'."
-                                               (file-name-nondirectory update-file)
-                                               (file-name-nondirectory base-file))
-                            'action `(lambda (_)
-                                       (ediff-merge-files ,update-file ,base-file nil
-                                                          ;; location of the merged file-pair
-                                                          ,(cdr file-pair)))
-                            'type 'pacfiles--button-generic)
+        (progn
+          ;; Insert button that merges two files.
+          (insert-text-button "[merge]"
+                              'help-echo (format "Start merging '%s' and '%s'."
+                                                 (file-name-nondirectory update-file)
+                                                 (file-name-nondirectory base-file))
+                              'action `(lambda (_)
+                                         (ediff-merge-files ,update-file ,base-file nil
+                                                            ;; location of the merged file-pair
+                                                            ,(cdr file-pair)))
+                              'type 'pacfiles--button-generic)
+          (insert " "))
       ;; The base file doesn't exist.
       ;; Insert button that just copies the update to the merge file.
       (insert-text-button "[merge]"
@@ -86,7 +88,8 @@ FILE is removed."
                                                       ,base-file ,update-file))
                                          (copy-file ,update-file ,(cdr file-pair))
                                          (when (not pacfiles--inhibit-button-revert) (revert-buffer t t))))
-                            'type 'pacfiles--button-generic))))
+                            'type 'pacfiles--button-generic)
+      (insert " "))))
 
 (defun pacfiles--insert-view-merge-button (file-pair)
   "Insert a button that displays the merge in FILE-PAIR."
@@ -103,18 +106,23 @@ FILE is removed."
                                      (set-window-buffer window
                                       (pacfiles--create-view-buffer
                                        (file-name-nondirectory ,file-base) ,file-merge))))
-                        'type 'pacfiles--button-generic)))
+                        'type 'pacfiles--button-generic)
+    (insert " ")))
 
 (defun pacfiles--insert-diff-button (file-update)
   "Insert a button that displays a diff of the update FILE-UPDATE and its base file."
   (let ((file-base (file-name-sans-extension file-update)))
-    (when (file-exists-p file-base)
-      (insert-text-button "[diff]"
-                          'help-echo (format "Diff '%s' with '%s'."
-                                             (file-name-nondirectory file-update)
-                                             (file-name-nondirectory file-base))
-                          'action `(lambda (_) (ediff-files ,file-update ,file-base))
-                          'type 'pacfiles--button-generic))))
+    (if (file-exists-p file-base)
+        (progn
+          (insert-text-button "[diff]"
+                              'help-echo (format "Diff '%s' with '%s'."
+                                                 (file-name-nondirectory file-update)
+                                                 (file-name-nondirectory file-base))
+                              'action `(lambda (_) (ediff-files ,file-update ,file-base))
+                              'type 'pacfiles--button-generic)
+          (insert " "))
+      ;; Replace the diff button with spaces
+      (insert "       "))))
 
 (defun pacfiles--insert-apply-button (file-pair)
   "Insert a button that copies the `cdr' of FILE-PAIR to its `car'."
@@ -143,7 +151,8 @@ FILE is removed."
                                      (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
                                      (when (not pacfiles--inhibit-button-revert) (revert-buffer t t))
                                      (message "Merge applied!")))
-                        'type 'pacfiles--button-apply)))
+                        'type 'pacfiles--button-apply)
+    (insert " ")))
 
 (defun pacfiles--insert-discard-button (file-pair)
   "Insert button that deletes the `cdr' of FILE-PAIR from the file system."
@@ -161,7 +170,8 @@ FILE is removed."
                                        (delete-file del-file)
                                        (message "Merge discarded!")))
                                    (when (not pacfiles--inhibit-button-revert) (revert-buffer t t)))
-                        'type 'pacfiles--button-discard)))
+                        'type 'pacfiles--button-discard)
+    (insert " ")))
 
 (defun pacfiles--insert-delete-button (file-pair)
   "Insert a button that deletes the file in the `car' of FILE-PAIR."
@@ -175,7 +185,8 @@ FILE is removed."
                                      (delete-file (pacfiles--add-sudo-maybe ,update-file :write))
                                      (message "File deleted!"))
                                    (when (not pacfiles--inhibit-button-revert) (revert-buffer t t)))
-                        'type 'pacfiles--button-delete)))
+                        'type 'pacfiles--button-delete)
+    (insert " ")))
 
 (defun pacfiles--insert-footer-buttons ()
   "Insert the `apply all' and `discard all' buttons."
