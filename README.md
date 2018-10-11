@@ -1,3 +1,6 @@
+![Release tag](https://img.shields.io/github/tag/UndeadKernel/pacfiles-mode.svg?label=release)
+[![MIT license](https://img.shields.io/github/license/UndeadKernel/pacfiles-mode.svg)](https://github.com/UndeadKernel/pacfiles-mode/blob/master/LICENSE)
+
 # pacfiles-mode
 
 Emacs major mode to manage `.pacnew` and `.pacsave` files left by Arch's pacman.
@@ -7,7 +10,7 @@ that a user can interact with. After finishing the Ediff merge session,
 also takes care of keeping the correct permissions of merged files, and
 requests passwords (with TRAMP) to act as root when needed.
 
-*pacfiles-mode** is free software, licensed under the MIT License.
+*pacfiles-mode* is free software, licensed under the MIT License.
 
 ![pacfiles-mode main interface](/../screenshots/main_ui.png "Main user interface")
 
