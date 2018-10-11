@@ -1,7 +1,9 @@
 ;;; pacfiles-utils.el --- common utilities of pacfiles-mode -*- lexical-binding: t; -*-
 
-;;; Code:
 ;;; Commentary:
+;; Utility functions used throughout pacfiles-mode
+;;
+;;; Code:
 
 (defun pacfiles--calculate-merge-file (file path)
   "File name associated to the merge file tied to FILE located in PATH."
@@ -22,7 +24,7 @@ PERMISSION is either \":read\" or \":write\""
     apt-path))
 
 (defun pacfiles--var-to-cons (var)
-  "Create a cons of the VAR symbol and the value of VAR."
+  "Create a cons of the VAR symbol and the VAR value."
   `(,var . ,(symbol-value var)))
 
 (defun pacfiles--cons-to-var (cons)

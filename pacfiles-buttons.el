@@ -1,37 +1,41 @@
 ;;; pacfiles-buttons.el --- the buttons of pacfiles-mode --- -*- lexical-binding: t; -*-
 
 ;;; Commentary:
+;; Definitions that deal with buttons and their fonts.
+;;
 ;;; Code:
 
-(defgroup pacfiles-button-faces nil "Faces for the buttons used in pacfiles-mode.")
+(defgroup pacfiles-button-faces nil
+  "Faces for the buttons used in pacfiles-mode."
+  :group 'pacfiles)
 
-(defface pacfiles--apply-all-face
+(defface pacfiles--apply-all
   '((t (:inherit 'button :height 1.3)))
   "Face for the Apply All button."
   :group 'pacfiles-button-faces)
 
-(defface pacfiles--discard-all-face
+(defface pacfiles--discard-all
   '((t (:inherit 'button :height 1.3)))
   "Face for the Apply All button."
   :group 'pacfiles-button-faces)
 
-(defface pacfiles--discard-face
+(defface pacfiles--discard
   '((t (:inherit 'warning :weight bold :underline t)))
   "Face for the Apply All button."
   :group 'pacfiles-button-faces)
 
-(defface pacfiles--delete-face
+(defface pacfiles--delete
   '((t (:inherit 'error :weight bold :underline t)))
   "Face for the Apply All button."
   :group 'pacfiles-button-faces)
 
 
 (define-button-type 'pacfiles--button-apply-all
-  'face 'pacfiles--apply-all-face
+  'face 'pacfiles--apply-all
   'follow-link t)
 
 (define-button-type 'pacfiles--button-discard-all
-  'face 'pacfiles--discard-all-face
+  'face 'pacfiles--discard-all
   'follow-link t)
 
 (define-button-type 'pacfiles--button-apply
@@ -39,11 +43,11 @@
   'follow-link t)
 
 (define-button-type 'pacfiles--button-discard
-  'face 'pacfiles--discard-face
+  'face 'pacfiles--discard
   'follow-link t)
 
 (define-button-type 'pacfiles--button-delete
-  'face 'pacfiles--delete-face
+  'face 'pacfiles--delete
   'follow-link t)
 
 (define-button-type 'pacfiles--button-generic

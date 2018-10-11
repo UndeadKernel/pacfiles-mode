@@ -109,9 +109,9 @@ other buffer.
 ## Functions and Variables
 
 ### Commands
-* `pacfiles` or `pacfiles/start`: start *pacfiles-mode*.
-* `pacfiles/quit`: quit *pacfiles-mode*.
-* `pacfiles/revert-buffer`: reload the list of update files
+* `pacfiles` or `pacfiles-start`: start *pacfiles-mode*.
+* `pacfiles-quit`: quit *pacfiles-mode*.
+* `pacfiles-revert-buffer`: reload the list of update files
 
 ### Configuration variables
 * `pacfiles-updates-search-command`: command used to search for `.pacnew` and

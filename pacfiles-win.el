@@ -1,9 +1,12 @@
 ;;; pacfiles-win.el --- Window related functions -*- lexical-binding: t; -*-
 
 ;;; Commentary:
+;; Functions to manage the windows of pacfiles-mode
+;;
 ;;; Code:
 
 (require 'subr-x)
+(require 'ediff)
 
 (defvar pacfiles--files-buffer-name "*pacfiles:file-list*"
   "Name of the window that holds the list of pacman files.")

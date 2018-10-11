@@ -1,16 +1,42 @@
-;;; pacfiles-mode.el --- Definition of the pacfiles Major mode -*- lexical-binding: t; -*-
-
+;;; pacfiles-mode.el --- pacnew and pacsave merging tool -*- lexical-binding: t; -*-
+;;
+;; Copyright (C) 2018 Carlos G. Cordero
+;;
+;; Author: Carlos G. Cordero <http://github/UndeadKernel>
+;; Maintainer: Carlos G. Cordero <pacfiles@binarycharly.com>
+;; Created: Oct 11, 2018
+;; Modified: Oct 11, 2018
+;; Version: 1.0
+;; Keywords: files pacman arch pacnew pacsave update linux
+;; URL: https://github.com/UndeadKernel/pacfiles-mode
+;; Package-Requires: ((emacs "26") (cl-lib "0.5"))
+;;
+;; This file is not part of GNU Emacs.
+;;
 ;;; Commentary:
-;; The following coding conventions are used:
-;;   pacfiles/  : User facing (public) function
-;;   pacfiles-  : User facing (public) variable
-;;   pacfiles-- : Private function or variable
+;;
+;; `pacfiles-mode' is an Emacs major mode to manage `.pacnew` and `.pacsave`
+;; files left by Arch's pacman. To merge files, *pacfiles-mode* automatically
+;; creates an Ediff merge session that a user can interact with. After finishing
+;; the Ediff merge session, *pacfiles-mode* cleans up the mess that Ediff leaves
+;; behind. *pacfiles-mode* also takes care of keeping the correct permissions of
+;; merged files, and requests passwords (with TRAMP) to act as root when needed.
+;;
+;; Start the major mode using the command `pacfiles' or `pacfiles/start'.
+;;
 ;;; Code:
 
 (require 'pacfiles-buttons)
 (require 'pacfiles-utils)
 (require 'pacfiles-win)
 
+(require 'cl-seq)
+(require 'ediff)
+(require 'outline)
+(require 'time-date)
+
+(defgroup pacfiles nil "Faces for the buttons used in pacfiles-mode."
+  :group 'tools)
 
 (defvar pacfiles-updates-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
   "Command to find .pacnew files.")
@@ -23,8 +49,11 @@
   "Alist that stores ediff variables and its values.")
 
 
-(defalias 'pacfiles 'pacfiles/start)
-(defun pacfiles/start ()
+;;;###autoload
+(defalias 'pacfiles 'pacfiles-start)
+
+;;;###autoload
+(defun pacfiles-start ()
   "Find and manage pacman backup files in an Arch-based GNU/Linux system."
   (interactive)
   ;; Save the current window configuration so that it can be restored when we are finished.
@@ -35,10 +64,10 @@
     (display-buffer buffer '(pacfiles--display-buffer-fullscreen))
     (with-current-buffer buffer
       (pacfiles-mode)
-      (pacfiles/revert-buffer t t))))
+      (pacfiles-revert-buffer t t))))
 
-(defun pacfiles/quit ()
-  "Quit pacfiles-mode and restore the previous window configuration."
+(defun pacfiles-quit ()
+  "Quit ‘pacfiles-mode’ and restore the previous window and ediff configuration."
   (interactive)
   (pacfiles--restore-ediff-conf)
   ;; Kill buffers we create which start with '*pacfiles:'
@@ -46,8 +75,8 @@
   (pacfiles--pop-window-conf))
 
 ;; Main function that displays the contents of the PACFILES buffer.
-(defun pacfiles/revert-buffer (&optional ignore-auto noconfirm)
-  "Populate the pacfiles-mode buffer with .pacnew and .pacsave files.
+(defun pacfiles-revert-buffer (&optional _ignore-auto noconfirm)
+  "Populate the ‘pacfiles-mode’ buffer with .pacnew and .pacsave files.
 
 Ignore IGNORE-AUTO but take into account NOCONFIRM."
   (interactive)
@@ -92,17 +121,18 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
         (pacfiles--insert-footer-buttons))))
   (goto-char 0))
 
-(defun pacfiles/revert-buffer-no-confirm ()
+;;;###autoload
+(defun pacfiles-revert-buffer-no-confirm ()
     "Revert the pacfiles list buffer without asking for confirmation."
     (interactive)
-    (pacfiles/revert-buffer t t))
+    (pacfiles-revert-buffer t t))
 
 (defun pacfiles--insert-pending-files (files-alist merged-files)
   "Insert files in FILES-ALIST if their `cdr' is not in MERGED-FILES.
 
 The FILE-TYPE specifies which type of update file we are processing."
   ;; Keep files in FILES-ALIST which don't have a cdr in MERGED-FILES.
-  (let ((pending-alist (remove-if (lambda (i) (member (cdr i) merged-files)) files-alist)))
+  (let ((pending-alist (cl-remove-if (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null pending-alist)
         (insert (propertize "--- no pending files ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair pending-alist)
@@ -115,9 +145,9 @@ The FILE-TYPE specifies which type of update file we are processing."
 
 (defun pacfiles--insert-merged-files (files-alist merged-files)
   "Insert files in FILES-ALIST that have an associated file in MERGED-FILES."
-  (let ((merged-alist (remove-if-not (lambda (i) (member (cdr i) merged-files)) files-alist)))
+  (let ((merged-alist (cl-remove-if-not (lambda (i) (member (cdr i) merged-files)) files-alist)))
     (if (null merged-alist)
-        (insert (propertize "--- no merge files ---\n" 'font-lock-face 'font-lock-comment-face))
+        (insert (propertize "--- no merged files ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair merged-alist)
         (pacfiles--insert-apply-button file-pair)
         (pacfiles--insert-view-merge-button file-pair)
@@ -160,7 +190,7 @@ If REVERSE-ORDER is non-nil, calculate the time difference as
 
 (defun pacfiles--save-ediff-conf ()
   "Save ediff variables we modify with the user's current values.
-We restore the saved variables after pacfiles-mode quits."
+We restore the saved variables after ‘pacfiles-mode’ quits."
   (require 'ediff)
   (let ((vars-to-save
          '(ediff-autostore-merges ediff-keep-variants ediff-window-setup-function
@@ -170,7 +200,7 @@ We restore the saved variables after pacfiles-mode quits."
             (push (pacfiles--var-to-cons var) pacfiles--ediff-conf))))
 
 (defun pacfiles--change-ediff-conf ()
-  "Change ediff's configuration variables to fit pacfiles-mode."
+  "Change ediff's configuration variables to fit ‘pacfiles-mode’."
   (setq ediff-autostore-merges nil
         ediff-keep-variants t
         ediff-window-setup-function #'ediff-setup-windows-plain
@@ -179,7 +209,7 @@ We restore the saved variables after pacfiles-mode quits."
   (add-hook 'ediff-quit-hook #'pacfiles--pop-window-conf t)
   (add-hook 'ediff-cleanup-hook #'pacfiles--clean-after-ediff)
   (remove-hook 'ediff-quit-merge-hook #'ediff-maybe-save-and-delete-merge)
-  (add-hook 'ediff-quit-hook (lambda () (pacfiles/revert-buffer  t t))))
+  (add-hook 'ediff-quit-hook (lambda () (pacfiles-revert-buffer  t t))))
 
 (defun pacfiles--restore-ediff-conf ()
     "Restore the ediff variables saved by `pacfiles--save-ediff-conf'."
@@ -189,25 +219,29 @@ We restore the saved variables after pacfiles-mode quits."
 
 (defvar pacfiles-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q")       #'pacfiles/quit)
-    (define-key map (kbd "g")       #'pacfiles/revert-buffer-no-confirm)
-    (define-key map (kbd "r")       #'pacfiles/revert-buffer-no-confirm)
+    (define-key map (kbd "q")       #'pacfiles-quit)
+    (define-key map (kbd "g")       #'pacfiles-revert-buffer-no-confirm)
+    (define-key map (kbd "r")       #'pacfiles-revert-buffer-no-confirm)
     (define-key map (kbd "TAB")     #'outline-toggle-children)
     (define-key map (kbd "C-c C-p") #'outline-previous-heading)
     (define-key map (kbd "C-c C-n") #'outline-next-heading)
     (define-key map (kbd "n")       #'forward-button)
     (define-key map (kbd "p")       #'backward-button)
     map)
-  "Keymap for pacfiles-mode.")
+  "Keymap for ‘pacfiles-mode’.")
 
+;; Tell emacs that, when creating new buffers, pacfiles-mode should not be used
+;; ... as the major mode.
+(put 'pacfiles-mode 'mode-class 'special)
+
+;;;###autoload
 (define-derived-mode pacfiles-mode outline-mode "pacfiles"
   :syntax-table nil
   :abbrev-table nil
   "Major mode for managing .pacnew and .pacsave files."
   ;; If the buffer is not the one we create, do nothing and error out.
-  (when (not (string= (buffer-name) pacfiles--files-buffer-name))
-    (user-error "Use the command `pacfiles' instead of `pacfiles-mode' to start pacfiles-mode")
-    (return))
+  (unless (string= (buffer-name) pacfiles--files-buffer-name)
+    (user-error "Use the command `pacfiles' instead of `pacfiles-mode' to start pacfiles-mode"))
   ;; The buffer shall not be edited.
   (read-only-mode)
   ;; No edits... no undo.
@@ -224,7 +258,8 @@ We restore the saved variables after pacfiles-mode quits."
   (when (and (fboundp 'display-line-numbers-mode)
              (bound-and-true-p global-display-line-numbers-mode))
     (display-line-numbers-mode -1))
-  (setq-local revert-buffer-function #'pacfiles/revert-buffer)
+  ;; Set the function used when reverting pacfile-mode buffers.
+  (setq-local revert-buffer-function #'pacfiles-revert-buffer)
   ;; configure ediff
   (pacfiles--change-ediff-conf)
   ;; configure outline-mode
