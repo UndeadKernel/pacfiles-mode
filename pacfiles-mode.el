@@ -5,7 +5,7 @@
 ;; Author: Carlos G. Cordero <http://github/UndeadKernel>
 ;; Maintainer: Carlos G. Cordero <pacfiles@binarycharly.com>
 ;; Created: Oct 11, 2018
-;; Modified: Oct 11, 2018
+;; Modified: Oct 14, 2018
 ;; Version: 1.0
 ;; Keywords: files pacman arch pacnew pacsave update linux
 ;; URL: https://github.com/UndeadKernel/pacfiles-mode
@@ -30,19 +30,19 @@
 (require 'pacfiles-utils)
 (require 'pacfiles-win)
 
-(require 'cl-seq)
+(require 'cl-lib)
 (require 'ediff)
 (require 'outline)
 (require 'time-date)
 
-(defgroup pacfiles nil "Faces for the buttons used in pacfiles-mode."
-  :group 'tools)
+(defgroup pacfiles nil "Options that relate to ‘pacfiles-mode’."
+  :group 'applications)
 
 (defvar pacfiles-updates-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
   "Command to find .pacnew files.")
 
 (defvar pacfiles--merge-search-command
-  (concat "find " pacfiles-merge-file-tmp-location " -name '*.pacmerge' 2>/dev/null")
+  (concat "find " (shell-quote-argument pacfiles-merge-file-tmp-location) " -name '*.pacmerge' 2>/dev/null")
   "Command to search for temporarily merged files.")
 
 (defvar pacfiles--ediff-conf '()
@@ -248,16 +248,6 @@ We restore the saved variables after ‘pacfiles-mode’ quits."
   (buffer-disable-undo)
   ;; Disable showing parents locally by letting the mode think it's disabled.
   (setq-local show-paren-mode nil)
-  (setq show-trailing-whitespace nil)
-  ;; Disable lines numbers.
-  (when (bound-and-true-p global-linum-mode)
-    (linum-mode -1))
-  (when (and (fboundp 'nlinum-mode)
-             (bound-and-true-p global-nlinum-mode))
-    (nlinum-mode -1))
-  (when (and (fboundp 'display-line-numbers-mode)
-             (bound-and-true-p global-display-line-numbers-mode))
-    (display-line-numbers-mode -1))
   ;; Set the function used when reverting pacfile-mode buffers.
   (setq-local revert-buffer-function #'pacfiles-revert-buffer)
   ;; configure ediff
