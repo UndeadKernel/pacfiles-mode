@@ -15,7 +15,21 @@ requests passwords (with TRAMP) to act as root when needed.
 ![pacfiles-mode main interface](/../screenshots/main_ui.png "Main user interface")
 
 ## Installation and Setup
-*pacfiles-mode* can only be installed manually as of now.
+*pacfiles-mode* can be installed automatically from a package repository or
+manually.
+
+### Automatic installation
+*pacfiles-mode* is in the [MELPA](https://melpa.org/) package repository. To
+install from MELPA, make sure the following is somewhere in your
+`~/.emacs.d/init.el`:
+
+``` emacs-lisp
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+```
+Open emacs and execute `M-x package-refresh-contents RET` followed by `M-x
+package-install RET pacfiles-mode RET`. *pacfiles-mode* will then be compiled
+and installed.
 
 ### Manual installation
 To manually install *pacfiles-mode*, clone this repository into `.emacs.d`:
@@ -85,7 +99,7 @@ Actions")
 The `[Apply All]` and `[Discard All]` buttons do what you would expect them to do.
 
 ## Ediff tricks and tips
-When merging an update, Ediff is setup as this:
+When merging an update, Ediff's setup will look like this:
 
 ![Ediff interface](/../screenshots/ediff_ui.png "Ediff interface")
 
@@ -106,7 +120,7 @@ You can switch to the merge buffer, buffer **C** in Ediff, and modify it as any
 other buffer.
 
 
-## Functions and Variables
+## Functions and Variables of *pacfiles-mode*
 
 ### Commands
 * `pacfiles` or `pacfiles-start`: start *pacfiles-mode*.
