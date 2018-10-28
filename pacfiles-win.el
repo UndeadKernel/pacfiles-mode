@@ -59,7 +59,8 @@ EDIFF windows.")
         (select-window window-c t) ; buffer-c is made current
         (when (and (buffer-modified-p)
                    (y-or-n-p (format "'%s' was modified. Save before killing? " (buffer-name))))
-          (save-buffer))
+	  (with-file-modes #o700
+            (save-buffer)))
         (set-buffer-modified-p nil) ; Set buffer to not modified to not ask user
         (kill-buffer)
         (switch-to-buffer empty-buffer)))    ;; Kill file-a and file-b always. We want to explicitly set the current buffer
