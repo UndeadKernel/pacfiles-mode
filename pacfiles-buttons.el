@@ -76,9 +76,12 @@ FILE is removed."
                                                  (file-name-nondirectory update-file)
                                                  (file-name-nondirectory base-file))
                               'action `(lambda (_)
-                                         (ediff-merge-files ,update-file ,base-file nil
-                                                            ;; location of the merged file-pair
-                                                            ,(cdr file-pair)))
+                                         (ediff-merge-files
+					  (pacfiles--add-sudo-maybe ,update-file :read)
+					  (pacfiles--add-sudo-maybe ,base-file :read)
+					  nil
+                                          ;; location of the merged file-pair
+                                          ,(cdr file-pair)))
                               'type 'pacfiles--button-generic)
           (insert " "))
       ;; The base file doesn't exist.
@@ -122,7 +125,9 @@ FILE is removed."
                               'help-echo (format "Diff '%s' with '%s'."
                                                  (file-name-nondirectory file-update)
                                                  (file-name-nondirectory file-base))
-                              'action `(lambda (_) (ediff-files ,file-update ,file-base))
+                              'action `(lambda (_) (ediff-files
+						    (pacfiles--add-sudo-maybe ,file-update :read)
+						    (pacfiles--add-sudo-maybe ,file-base :read)))
                               'type 'pacfiles--button-generic)
           (insert " "))
       ;; Replace the diff button with spaces
