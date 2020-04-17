@@ -86,7 +86,12 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
       (run-hooks 'before-revert-hook)
       ;; The actual revert mechanism starts here
       (let ((inhibit-read-only t)
-            (files (split-string (shell-command-to-string pacfiles-updates-search-command) "\n" t))
+            (files (mapcar (lambda (file)
+			     (if (file-remote-p default-directory)
+				 (with-parsed-tramp-file-name default-directory nil
+				   (tramp-make-tramp-file-name method user domain host port file))
+			       file))
+			   (split-string (shell-command-to-string pacfiles-updates-search-command) "\n" t)))
             (merged-files (split-string (shell-command-to-string pacfiles--merge-search-command) "\n" t))
             (pacnew-alist (list))
             (pacsave-alist (list)))
