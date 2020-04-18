@@ -5,6 +5,8 @@
 ;;
 ;;; Code:
 
+(require 'tramp)
+
 (defgroup pacfiles-button-faces nil
   "Faces for the buttons used in pacfiles-mode."
   :group 'pacfiles)
@@ -77,9 +79,9 @@ FILE is removed."
                                                  (file-name-nondirectory base-file))
                               'action `(lambda (_)
                                          (ediff-merge-files
-					  (pacfiles--add-sudo-maybe ,update-file :read)
-					  (pacfiles--add-sudo-maybe ,base-file :read)
-					  nil
+                                          (pacfiles--add-sudo-maybe ,update-file :read)
+                                          (pacfiles--add-sudo-maybe ,base-file :read)
+                                          nil
                                           ;; location of the merged file-pair
                                           ,(cdr file-pair)))
                               'type 'pacfiles--button-generic)
@@ -126,8 +128,8 @@ FILE is removed."
                                                  (file-name-nondirectory file-update)
                                                  (file-name-nondirectory file-base))
                               'action `(lambda (_) (ediff-files
-						    (pacfiles--add-sudo-maybe ,file-update :read)
-						    (pacfiles--add-sudo-maybe ,file-base :read)))
+                                               (pacfiles--add-sudo-maybe ,file-update :read)
+                                               (pacfiles--add-sudo-maybe ,file-base :read)))
                               'type 'pacfiles--button-generic)
           (insert " "))
       ;; Replace the diff button with spaces

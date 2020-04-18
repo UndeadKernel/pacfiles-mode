@@ -5,7 +5,7 @@
 ;; Author: Carlos G. Cordero <http://github/UndeadKernel>
 ;; Maintainer: Carlos G. Cordero <pacfiles@binarycharly.com>
 ;; Created: Oct 11, 2018
-;; Modified: Oct 14, 2018
+;; Modified: Apr 18, 2020
 ;; Version: 1.0
 ;; Keywords: files pacman arch pacnew pacsave update linux
 ;; URL: https://github.com/UndeadKernel/pacfiles-mode
@@ -38,7 +38,8 @@
 (defgroup pacfiles nil "Options that relate to ‘pacfiles-mode’."
   :group 'applications)
 
-(defvar pacfiles-updates-search-command "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
+(defvar pacfiles-updates-search-command
+  "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
   "Command to find .pacnew files.")
 
 (defvar pacfiles--merge-search-command
@@ -86,8 +87,12 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
       (run-hooks 'before-revert-hook)
       ;; The actual revert mechanism starts here
       (let ((inhibit-read-only t)
-            (files (split-string (shell-command-to-string pacfiles-updates-search-command) "\n" t))
-            (merged-files (split-string (shell-command-to-string pacfiles--merge-search-command) "\n" t))
+            (files (mapcar #'pacfiles--set-remote-path-maybe
+                           (split-string (shell-command-to-string
+                                          pacfiles-updates-search-command) "\n" t)))
+            (merged-files (mapcar #'pacfiles--set-remote-path-maybe
+                                  (split-string (shell-command-to-string
+                                                 pacfiles--merge-search-command) "\n" t)))
             (pacnew-alist (list))
             (pacsave-alist (list)))
         (delete-region (point-min) (point-max))
@@ -95,7 +100,9 @@ Ignore IGNORE-AUTO but take into account NOCONFIRM."
         ;; Split .pacnew and .pacsave files
         (dolist (file files)
           ;; Associate each FILE in FILES with a file to hold the merge
-          (let ((merge-file (pacfiles--calculate-merge-file file pacfiles-merge-file-tmp-location)))
+          (let ((merge-file
+                 (pacfiles--set-remote-path-maybe
+                  (pacfiles--calculate-merge-file file pacfiles-merge-file-tmp-location))))
             (cond
              ((string-match-p ".pacnew" file)
               (push (cons file merge-file) pacnew-alist))
