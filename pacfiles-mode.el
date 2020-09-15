@@ -5,8 +5,8 @@
 ;; Author: Carlos G. Cordero <http://github/UndeadKernel>
 ;; Maintainer: Carlos G. Cordero <pacfiles@binarycharly.com>
 ;; Created: Oct 11, 2018
-;; Modified: Apr 18, 2020
-;; Version: 1.0
+;; Modified: Sep 15, 2020
+;; Version: 1.1
 ;; Keywords: files pacman arch pacnew pacsave update linux
 ;; URL: https://github.com/UndeadKernel/pacfiles-mode
 ;; Package-Requires: ((emacs "26") (cl-lib "0.5"))
@@ -38,9 +38,11 @@
 (defgroup pacfiles nil "Options that relate to ‘pacfiles-mode’."
   :group 'applications)
 
-(defvar pacfiles-updates-search-command
+(defcustom pacfiles-updates-search-command
   "find /etc -name '*.pacnew' -o -name '*.pacsave' 2>/dev/null"
-  "Command to find .pacnew files.")
+  "Command to find .pacnew files."
+  :type '(string)
+  :group 'pacfiles)
 
 (defvar pacfiles--merge-search-command
   (concat "find " (shell-quote-argument pacfiles-merge-file-tmp-location) " -name '*.pacmerge' 2>/dev/null")

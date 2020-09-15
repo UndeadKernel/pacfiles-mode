@@ -8,7 +8,7 @@
 (require 'tramp)
 
 (defgroup pacfiles-button-faces nil
-  "Faces for the buttons used in pacfiles-mode."
+  "Faces of the buttons used in pacfiles-mode."
   :group 'pacfiles)
 
 (defface pacfiles--apply-all
@@ -57,8 +57,10 @@
   'follow-link t)
 
 
-(defvar pacfiles-activate-no-confirm nil
-  "Do not ask for user input when applying or discarding a merged file.")
+(defcustom pacfiles-activate-no-confirm nil
+  "Do not ask for user input when applying or discarding a merged file."
+  :type '(boolean)
+  :group 'pacfiles)
 
 (defvar pacfiles--inhibit-button-revert nil
   "Clicking a button does not revert the pacfiles list buffer.")
