@@ -22,8 +22,8 @@
 (defvar pacfiles--empty-buffer-name "*pacfiles:empty-buffer*"
   "Empty buffer meant to replace buffers killed in EDIFF windows.
 Doing this replacement avoids having multiple windows open with the same buffer.
-Having the same buffer open in multiple windows might break the proper killing of
-EDIFF windows.")
+Having the same buffer open in multiple windows might break the proper killing
+of EDIFF windows.")
 
 (defun pacfiles--display-buffer-fullscreen (buffer alist)
   "Display BUFFER fullscreen taking ALIST into account."
@@ -35,12 +35,14 @@ EDIFF windows.")
     window))
 
 (defun pacfiles--push-window-conf ()
-  "Push the current window configuration to later be restored by `pacfiles--restore-window-conf'."
+  "Push the current window configuration to later be restored
+by `pacfiles--restore-window-conf'."
   (let ((win-conf (current-window-configuration)))
     (push win-conf pacfiles--previous-window-confs)))
 
 (defun pacfiles--pop-window-conf ()
-  "Restore the first window configuration found in `pacfiles--previous-window-confs'."
+  "Restore the first window configuration found
+in `pacfiles--previous-window-confs'."
   (if pacfiles--previous-window-confs
     (condition-case nil
         (progn
@@ -61,11 +63,12 @@ EDIFF windows.")
         (select-window window-c t) ; buffer-c is made current
         (when (and (buffer-modified-p)
                    (y-or-n-p (format "'%s' was modified. Save before killing? " (buffer-name))))
-	  (with-file-modes #o700
+          (with-file-modes #o700
             (save-buffer)))
-        (set-buffer-modified-p nil) ; Set buffer to not modified to not ask user
+        (set-buffer-modified-p nil) ; buffer set to "not modified" to kill it without asking the user.
         (kill-buffer)
-        (switch-to-buffer empty-buffer)))    ;; Kill file-a and file-b always. We want to explicitly set the current buffer
+        (switch-to-buffer empty-buffer)))
+    ;; Kill file-a and file-b always. We want to explicitly set the current buffer
     ;; ... to make sure that no function in `kill-buffer-query-functions' stops us.
     (save-excursion
       (select-window window-a t) ; this makes buffer-a current
