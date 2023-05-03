@@ -1,15 +1,15 @@
-;;; pacfiles-mode.el --- pacnew and pacsave merging tool -*- lexical-binding: t; -*-
+;;; pacfiles-mode.el --- The pacnew and pacsave merging tool -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2018 Carlos G. Cordero
+;; Copyright (C) 2023 Carlos G. Cordero
 ;;
 ;; Author: Carlos G. Cordero <http://github/UndeadKernel>
 ;; Maintainer: Carlos G. Cordero <pacfiles@binarycharly.com>
 ;; Created: Oct 11, 2018
-;; Modified: Sep 15, 2020
-;; Version: 1.1
+;; Modified: May 03, 2023
+;; Version: 1.2
 ;; Keywords: files pacman arch pacnew pacsave update linux
 ;; URL: https://github.com/UndeadKernel/pacfiles-mode
-;; Package-Requires: ((emacs "26") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "26.1"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -29,6 +29,7 @@
 (require 'pacfiles-buttons)
 (require 'pacfiles-utils)
 (require 'pacfiles-win)
+(require 'pacfiles-automerge)
 
 (require 'cl-lib)
 (require 'ediff)
@@ -69,6 +70,7 @@
       (pacfiles-mode)
       (pacfiles-revert-buffer t t))))
 
+;;;###autoload
 (defun pacfiles-quit ()
   "Quit ‘pacfiles-mode’ and restore the previous window and ediff configuration."
   (interactive)
@@ -78,6 +80,7 @@
   (pacfiles--pop-window-conf))
 
 ;; Main function that displays the contents of the PACFILES buffer.
+;;;###autoload
 (defun pacfiles-revert-buffer (&optional _ignore-auto noconfirm)
   "Populate the ‘pacfiles-mode’ buffer with .pacnew and .pacsave files.
 
@@ -146,6 +149,7 @@ The FILE-TYPE specifies which type of update file we are processing."
         (insert (propertize "--- no pending files ---\n" 'font-lock-face 'font-lock-comment-face))
       (dolist (file-pair pending-alist)
         (pacfiles--insert-merge-button file-pair)
+        (pacfiles--insert-automerge-button-maybe file-pair)
         (pacfiles--insert-diff-button (car file-pair))
         (pacfiles--insert-delete-button file-pair)
         (insert (car file-pair) " ")

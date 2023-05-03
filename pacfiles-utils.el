@@ -9,7 +9,7 @@
 (require 'tramp)
 
 (defun pacfiles--calculate-merge-file (file path)
-  "Compute full path of a merge file tied to FILE located in PATH."
+  "Compute the merge file name associated with FILE and place it under PATH."
   (concat path (substring (secure-hash 'md5 file) 0 10) ".pacmerge"))
 
 (defun pacfiles--add-sudo-maybe (file-path permission)
@@ -42,6 +42,7 @@ PERMISSION is either \":read\" or \":write\""
 Use the same tramp method used by the user as the remote path."
   (if (file-remote-p default-directory)
       (with-parsed-tramp-file-name default-directory pf
+        ;; TODO: adapt the calling convention of this next function
         (tramp-make-tramp-file-name pf-method pf-user pf-domain pf-host pf-port file-path))
     file-path))
 

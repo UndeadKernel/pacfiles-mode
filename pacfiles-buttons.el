@@ -6,12 +6,23 @@
 ;;; Code:
 
 (require 'tramp)
+(require 'pacfiles-automerge)
 
 (defgroup pacfiles-button-faces nil
   "Faces of the buttons used in pacfiles-mode."
   :group 'pacfiles)
 
 (defface pacfiles--apply-all
+  '((t (:inherit 'button :height 1.3)))
+  "Face for the Apply All button."
+  :group 'pacfiles-button-faces)
+
+(defface pacfiles--automerge
+  '((t (:inherit 'button :foreground "#50fa7b" :height 1.1)))
+  "Face for the AutoMerge button."
+  :group 'pacfiles-button-faces)
+
+(defface pacfiles--discard-all
   '((t (:inherit 'button :height 1.3)))
   "Face for the Apply All button."
   :group 'pacfiles-button-faces)
@@ -52,6 +63,10 @@
   'face 'pacfiles--delete
   'follow-link t)
 
+(define-button-type 'pacfiles--button-automerge
+  'face 'pacfiles--automerge
+  'follow-link t)
+
 (define-button-type 'pacfiles--button-generic
   'face 'button
   'follow-link t)
@@ -68,8 +83,9 @@
 (defun pacfiles--insert-merge-button (file-pair)
   "Insert a button to merge FILE-PAIR.
 
-To determine the file-pair against which FILE will be merged, the extension of
-FILE is removed."
+FILE-PAIR corresponds to the path list (base-file merge-file). To determine the
+FILE-PAIR against which its `car' will be merged, the extension of its `car'
+is removed."
   (let* ((update-file (car file-pair))
          (base-file (file-name-sans-extension update-file)))
     (if (file-exists-p base-file)
@@ -102,6 +118,24 @@ FILE is removed."
                             'type 'pacfiles--button-generic)
       (insert " "))))
 
+(defun pacfiles--insert-automerge-button-maybe (file-pair)
+  "Insert a button to auto-merge FILE-PAIR if possible.
+
+Remove the extensin of the `car' of FILE-PAIR to choose the merge file."
+  (let* ((update-file (car file-pair))
+         (base-file (file-name-sans-extension update-file))
+         (mergefn (pacfiles--automerge-available update-file)))
+    (when mergefn
+      ;; Insert button that merges two files.
+      (insert-text-button "[A]"
+                          'help-echo (format "Auto-merge '%s' into '%s'."
+                                             (file-name-nondirectory update-file)
+                                             (file-name-nondirectory base-file))
+                          'action `(lambda (_)
+                                     (funcall ,mergefn ,base-file ,update-file))
+                          'type 'pacfiles--button-automerge)
+      (insert " "))))
+
 (defun pacfiles--insert-view-merge-button (file-pair)
   "Insert a button that displays the merge in FILE-PAIR."
   (let* ((file-update (car file-pair))
@@ -121,7 +155,7 @@ FILE is removed."
     (insert " ")))
 
 (defun pacfiles--insert-diff-button (file-update)
-  "Insert a button that displays a diff of the update FILE-UPDATE and its base file."
+  "Insert a button that displays a diff of FILE-UPDATE and its base file."
   (let ((file-base (file-name-sans-extension file-update)))
     (if (file-exists-p file-base)
         (progn
